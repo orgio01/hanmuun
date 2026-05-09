@@ -77,11 +77,13 @@ export function initVoiceSearch(input, btn) {
     btn.setAttribute("aria-label", "Дуу хоолойгоор хайх");
   };
 
-  rec.onerror = () => {
+  rec.onerror = (e) => {
     active = false;
     btn.classList.remove("is-listening");
     btn.setAttribute("aria-label", "Дуу хоолойгоор хайх");
-    showToast("Микрофон авах боломжгүй", "warn");
+    if (e.error === "not-allowed") showToast("Микрофоны зөвшөөрөл байхгүй байна", "warn");
+    else if (e.error === "network") showToast("Интернэт холболт шалгана уу", "warn");
+    // Бусад алдаа чимээгүйхэн арилна
   };
 }
 

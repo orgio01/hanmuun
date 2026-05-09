@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Seller Dashboard — HANMUN</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/seller.css"/>
+</head>
+<body class="sellerBody">
+
+  <!-- Sidebar -->
+  <aside class="sellerSide" id="sellerSide">
+    <div class="sellerSide__brand">
+      <span class="sellerSide__logo">HANMUN</span>
+      <span class="sellerSide__tag">Seller</span>
+    </div>
+    <div class="sellerSide__shop" data-shop-name>Дэлгүүр</div>
+
+    <nav class="sellerNav">
+      <a class="sellerNav__item is-active" href="#" data-nav="overview">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Хяналтын самбар
+      </a>
+      <a class="sellerNav__item" href="#" data-nav="products">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        Бараанууд
+        <span class="sellerNav__badge" data-products-count>—</span>
+      </a>
+      <a class="sellerNav__item" href="#" data-nav="add">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Бараа нэмэх
+      </a>
+    </nav>
+
+    <div class="sellerSide__footer">
+      <div class="sellerSide__user">
+        <div class="sellerSide__avatar" data-seller-initial>S</div>
+        <div>
+          <div class="sellerSide__email" data-seller-email></div>
+        </div>
+      </div>
+      <div class="sellerSide__actions">
+        <a class="sellerSide__link" href="/" target="_blank">Сайт ↗</a>
+        <button class="sellerSide__logout" type="button" data-logout>Гарах</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="sellerMain">
+
+    <header class="sellerTopbar">
+      <div class="sellerTopbar__left">
+        <button class="sellerTopbar__menu" id="menuToggle" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/></svg>
+        </button>
+        <h1 class="sellerTopbar__title" data-page-title>Хяналтын самбар</h1>
+      </div>
+      <button class="sellerTopbar__addBtn" type="button" data-nav="add" data-open-add hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        Бараа нэмэх
+      </button>
+    </header>
+
+    <!-- Auth gate -->
+    <div class="sellerGate" data-seller-gate>
+      <div class="sellerGate__box">
+        <div class="sellerGate__icon">🏪</div>
+        <p class="sellerGate__msg">Seller Center-т нэвтрэх шаардлагатай</p>
+        <a class="sellerGate__btn" href="/seller">Seller нэвтрэх →</a>
+      </div>
+    </div>
+
+    <!-- Overview page -->
+    <section class="sellerPage" data-seller-page="overview" hidden>
+      <div class="sellerStats">
+        <div class="sellerStat">
+          <div class="sellerStat__icon" style="background:rgba(0,116,233,.10);color:#0074e9">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+          </div>
+          <div><div class="sellerStat__val" data-stat-total>—</div><div class="sellerStat__label">Нийт бараа</div></div>
+        </div>
+        <div class="sellerStat">
+          <div class="sellerStat__icon" style="background:rgba(255,191,74,.15);color:#d97706">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div><div class="sellerStat__val" data-stat-pending>—</div><div class="sellerStat__label">Хүлээгдэж байна</div></div>
+        </div>
+        <div class="sellerStat">
+          <div class="sellerStat__icon" style="background:rgba(25,179,122,.10);color:#19b37a">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div><div class="sellerStat__val" data-stat-approved>—</div><div class="sellerStat__label">Зөвшөөрөгдсөн</div></div>
+        </div>
+        <div class="sellerStat">
+          <div class="sellerStat__icon" style="background:rgba(232,35,42,.10);color:#e8232a">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <div><div class="sellerStat__val" data-stat-rejected>—</div><div class="sellerStat__label">Татгалзсан</div></div>
+        </div>
+      </div>
+
+      <div class="sellerCard" style="margin-top:24px">
+        <div class="sellerCard__head">
+          <h2 class="sellerCard__title">Сүүлийн бараанууд</h2>
+          <a class="sellerCard__link" href="#" data-nav="products">Бүгдийг харах →</a>
+        </div>
+        <div class="sellerTableWrap">
+          <table class="sellerTable">
+            <thead><tr><th>Нэр</th><th>Ангилал</th><th>Үнэ</th><th>Байдал</th></tr></thead>
+            <tbody data-overview-tbody>
+              <tr><td colspan="4" class="sellerTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products page -->
+    <section class="sellerPage" data-seller-page="products" hidden>
+      <div class="sellerCard">
+        <div class="sellerTableWrap">
+          <table class="sellerTable">
+            <thead>
+              <tr>
+                <th style="width:52px">Зураг</th>
+                <th>Нэр</th>
+                <th>Ангилал</th>
+                <th>Үнэ</th>
+                <th>Нөөц</th>
+                <th>Байдал</th>
+                <th style="width:80px">Үйлдэл</th>
+              </tr>
+            </thead>
+            <tbody data-products-tbody>
+              <tr><td colspan="7" class="sellerTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add product page -->
+    <section class="sellerPage" data-seller-page="add" hidden>
+      <div class="sellerCard sellerAddCard">
+        <div class="sellerCard__head">
+          <h2 class="sellerCard__title">Шинэ бараа нэмэх</h2>
+        </div>
+        <form class="sellerForm" data-add-form>
+          <div class="sellerForm__grid">
+            <div class="sellerForm__field sellerForm__field--full">
+              <label>Барааны нэр *</label>
+              <input name="name" type="text" placeholder="Барааны нэр" required/>
+            </div>
+            <div class="sellerForm__field">
+              <label>Ангилал *</label>
+              <select name="category" required>
+                <option value="">Сонгох…</option>
+                <option>Electronics</option>
+                <option>Fashion</option>
+                <option>Beauty</option>
+                <option>Home</option>
+                <option>Sports</option>
+                <option>Baby</option>
+                <option>Food</option>
+                <option>Auto</option>
+                <option>Books</option>
+                <option>Toys</option>
+                <option>Office</option>
+                <option>Pets</option>
+                <option>Health</option>
+                <option>Travel</option>
+              </select>
+            </div>
+            <div class="sellerForm__field">
+              <label>Хүргэлтийн төрөл</label>
+              <select name="deliveryType">
+                <option value="">Сонгох…</option>
+                <option value="24h">⚡ 24 цагийн хүргэлт</option>
+                <option value="express">🏎️ Speed хүргэлт</option>
+                <option value="international">✈️ Гадаадаас</option>
+                <option value="reorder">🔄 Дахин авах</option>
+              </select>
+            </div>
+            <div class="sellerForm__field">
+              <label>Үнэ ($) *</label>
+              <input name="price" type="number" step="0.01" min="0" placeholder="0.00" required/>
+            </div>
+            <div class="sellerForm__field">
+              <label>Анхны үнэ ($)</label>
+              <input name="priceWas" type="number" step="0.01" min="0" placeholder="0.00"/>
+            </div>
+            <div class="sellerForm__field">
+              <label>Нөөц *</label>
+              <input name="stockQty" type="number" min="0" placeholder="0" required/>
+            </div>
+            <div class="sellerForm__field sellerForm__field--full">
+              <label>Тайлбар *</label>
+              <textarea name="description" rows="4" placeholder="Барааны дэлгэрэнгүй тайлбар…" required></textarea>
+            </div>
+            <div class="sellerForm__field sellerForm__field--full">
+              <label>Зургийн URL</label>
+              <div class="sellerForm__imgRow">
+                <input name="imageUrl" type="url" placeholder="https://… эсвэл upload хийнэ" data-img-url/>
+                <label class="sellerForm__uploadBtn">
+                  <input type="file" accept="image/*" data-img-file style="display:none"/>
+                  <span data-img-label>📷 Upload</span>
+                </label>
+              </div>
+              <div class="sellerForm__imgPreview" data-img-preview hidden>
+                <img data-img-preview-img src="" alt="Preview" style="max-height:120px;border:1px solid var(--border)"/>
+              </div>
+            </div>
+            <div class="sellerForm__field sellerForm__field--full">
+              <label>Tags (таслалаар)</label>
+              <input name="tags" type="text" placeholder="electronics, phone, accessories"/>
+            </div>
+          </div>
+
+          <div class="sellerForm__notice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Бараа нэмсний дараа <strong>Admin баталгаажуулалт</strong> хийгдэнэ. Зөвшөөрсний дараа сайтад харагдана.
+          </div>
+
+          <div class="sellerForm__error" data-form-error hidden></div>
+
+          <div class="sellerForm__actions">
+            <button class="sellerForm__cancelBtn" type="button" data-nav="products">Болих</button>
+            <button class="sellerForm__submitBtn" type="submit" data-submit-btn>
+              <span data-submit-label>Илгээх (баталгаажуулалт хүлэх)</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="/js/seller-dashboard.js"></script>
+</body>
+</html>

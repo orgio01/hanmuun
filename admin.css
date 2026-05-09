@@ -719,3 +719,23 @@
   place-items: center;
   flex-shrink: 0;
 }
+
+/* ── Banner upload zone ── */
+.bannerUploadZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  border: 2px dashed var(--ad-border);
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 140ms ease, background 140ms ease;
+  min-height: 130px;
+  color: var(--ad-muted);
+}
+.bannerUploadZone:hover {
+  border-color: var(--ad-blue);
+  background: rgba(0,116,233,.04);
+}

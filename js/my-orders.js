@@ -197,8 +197,16 @@ async function main() {
 
   const orders = results.filter(r => r.status === "fulfilled").map(r => r.value).filter(Boolean);
 
+  // Бүх хүсэлт амжилтгүй → сервер offline
+  const failed = results.every(r => r.status === "rejected");
   if (!orders.length) {
-    if (emptyEl) emptyEl.hidden = false;
+    if (emptyEl) {
+      emptyEl.hidden = false;
+      if (failed && history.length) {
+        const hint = emptyEl.querySelector(".moEmpty__hint");
+        if (hint) hint.textContent = "Сервер холбогдохгүй байна. Интернэт шалгана уу.";
+      }
+    }
     if (countEl) countEl.textContent = "0 захиалга";
     return;
   }

@@ -107,10 +107,13 @@ function renderItems(items) {
 function updateTotals(sub, fee) {
   const disc = appliedDiscount(sub);
   setText("[data-co-subtotal]", fmt(sub));
+  // Купоны хямдрал мөр
+  const discRow = document.getElementById("discountRow");
+  if (discRow) discRow.hidden = disc <= 0;
+  if (disc > 0) setText("[data-co-discount]", `-${fmt(disc)}`);
   if (fee != null) {
     setText("[data-co-delivery]", fmt(fee));
-    setText("[data-co-total]",    fmt(sub + fee - disc));
-    if (disc > 0) setText("[data-co-discount]", `-${fmt(disc)}`);
+    setText("[data-co-total]",    fmt(Math.max(0, sub + fee - disc)));
   } else {
     setText("[data-co-delivery]", "—");
     setText("[data-co-total]",    "—");
@@ -382,6 +385,17 @@ function showPaymentSuccess(orderNumber) {
 async function main() {
   initSearchNav();
   updateCartBadge();
+
+  // ── Нэвтрэх шаардлага ─────────────────────────────
+  if (!getProfile()) {
+    const wall = document.querySelector("[data-login-wall]");
+    const page = document.querySelector(".coPage");
+    const prog = document.querySelector(".coProgress");
+    if (wall) wall.hidden = false;
+    if (page) page.hidden = true;
+    if (prog) prog.hidden = true;
+    return; // зогсоох
+  }
 
   // Load cart items
   try {

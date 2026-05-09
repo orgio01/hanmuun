@@ -84,3 +84,13 @@ export function getRecentSearches() {
   try { return JSON.parse(localStorage.getItem(SEARCH_KEY) || "[]"); }
   catch { return []; }
 }
+
+/** HTML-д оруулахаас өмнө XSS-ийг сэргийлэх */
+export function escHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}

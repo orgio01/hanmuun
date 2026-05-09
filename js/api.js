@@ -1,20 +1,27 @@
 export async function apiJson(path, opts = {}) {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-    ...opts,
-  });
+  let res;
+  try {
+    res = await fetch(path, {
+      headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+      ...opts,
+    });
+  } catch {
+    // Network error (offline, server down)
+    const err = new Error("Сервер холбогдохгүй байна. Интернэт холболтоо шалгана уу.");
+    err.status = 0;
+    throw err;
+  }
 
   const isJson = (res.headers.get("content-type") || "").includes("application/json");
-  const data = isJson ? await res.json() : await res.text();
+  const data   = isJson ? await res.json() : await res.text();
 
   if (!res.ok) {
-    const msg = data?.error?.message || `Request failed (${res.status})`;
+    const msg = (typeof data === "object" && data?.error?.message) || `Алдаа (${res.status})`;
     const err = new Error(msg);
     err.status = res.status;
-    err.data = data;
+    err.data   = data;
     throw err;
   }
 
   return data;
 }
-

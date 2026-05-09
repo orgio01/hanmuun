@@ -175,25 +175,21 @@ function initRegisterForm(regForm) {
     const email   = qsId("regEmail")?.value.trim() || "";
     const pw      = qsId("regPass")?.value  || "";
     const pw2     = qsId("regPass2")?.value || "";
-    const name    = qsId("regName")?.value.trim()    || "";
-    const phone   = qsId("regPhone")?.value.trim()   || "";
-    const district = qsId("regDistrict")?.value      || "";
-    const address = qsId("regAddress")?.value.trim() || "";
+    const name    = qsId("regName")?.value.trim()  || "";
+    const phone   = qsId("regPhone")?.value.trim() || "";
 
     const e1 = validateGmail(email);   if (e1) return setError(e1);
     const e2 = validatePassword(pw);   if (e2) return setError(e2);
     if (pw !== pw2) return setError("Нууц үг таарахгүй байна.");
-    if (!name)     return setError("Нэрээ оруулна уу.");
+    if (!name)      return setError("Нэрээ оруулна уу.");
     const e3 = validatePhone(phone);   if (e3) return setError(e3);
-    if (!district) return setError("Дүүрэг сонгоно уу.");
-    if (!address)  return setError("Хаягаа оруулна уу.");
-    if (!required().every(c => c.checked)) return setError("Заавал зөвшөөрлийг тэмдэглэнэ үү.");
 
     const btn = regForm.querySelector("[type=submit]");
     setLoading(btn, true, "Бүртгэж байна…");
 
     const profileData = {
-      email: email.toLowerCase(), name, phone, district, addressLine: address,
+      email: email.toLowerCase(), name, phone,
+      district: "", addressLine: "",   // хаяг profile хэсэгт тусад нь нэмнэ
       createdAt: new Date().toISOString(),
     };
 
@@ -205,7 +201,8 @@ function initRegisterForm(regForm) {
       setProfile(profileData); // localStorage cache for checkout
       showToast("Бүртгэл амжилттай", "ok");
       const next = nextParam();
-      window.location.href = next ? `./${next}` : "/checkout.html";
+      // Хаяг нэмэхийн тулд profile хуудас руу буцна
+      window.location.href = next ? `./${next}` : "/profile.html";
     } catch (err) {
       const msg = firebaseErrorMessage(err.code) || err.message || "Бүртгэхэд алдаа гарлаа.";
       setError(msg);
@@ -228,6 +225,56 @@ function firebaseErrorMessage(code) {
     "auth/invalid-credential":      "И-мэйл эсвэл нууц үг буруу байна.",
   };
   return map[code] || null;
+}
+
+// ── Address block (profile page after login) ──────────────────────────────
+function initAddrBlock() {
+  const p = getProfile();
+  if (!p) return;
+
+  const noAddrEl   = qs("[data-no-addr]");
+  const hasAddrEl  = qs("[data-has-addr]");
+  const addrDisplay = qs("[data-addr-display]");
+  const addrForm   = qs("[data-addr-save-form]");
+  const addrError  = qs("[data-addr-error]");
+
+  function refreshAddrBlock() {
+    const cur = getProfile();
+    const hasAddr = !!(cur?.district && cur?.addressLine);
+    if (noAddrEl)  noAddrEl.hidden  = hasAddr;
+    if (hasAddrEl) hasAddrEl.hidden = !hasAddr;
+    if (addrDisplay && hasAddr) {
+      addrDisplay.innerHTML = `
+        <div style="font-size:.86rem;color:rgba(16,16,16,.72)">
+          📍 <strong>${cur.district}</strong>, ${cur.addressLine}
+        </div>`;
+    }
+  }
+  refreshAddrBlock();
+
+  // Save address
+  addrForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const district    = qsId("addrDistrict")?.value || "";
+    const addressLine = qsId("addrLine")?.value.trim() || "";
+    if (addrError) addrError.hidden = true;
+    if (!district)    { if (addrError) { addrError.textContent="Дүүрэг сонгоно уу."; addrError.hidden=false; } return; }
+    if (!addressLine) { if (addrError) { addrError.textContent="Хаягаа оруулна уу."; addrError.hidden=false; } return; }
+
+    const cur = getProfile();
+    setProfile({ ...cur, district, addressLine });
+    refreshAddrBlock();
+    showToast("Хаяг хадгалагдлаа ✓", "ok");
+  });
+
+  // Edit address button
+  qs("[data-edit-addr]")?.addEventListener("click", () => {
+    const cur = getProfile();
+    if (noAddrEl)  noAddrEl.hidden  = false;
+    if (hasAddrEl) hasAddrEl.hidden = true;
+    if (cur?.district)    { const el = qsId("addrDistrict"); if (el) el.value = cur.district; }
+    if (cur?.addressLine) { const el = qsId("addrLine");     if (el) el.value = cur.addressLine; }
+  });
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────
@@ -270,6 +317,9 @@ function main() {
   initRegisterForm(regForm);
 
   // ── Edit / Clear ──
+  // ── Хүргэлтийн хаяг блок ────────────────────────────
+  initAddrBlock();
+
   editBtn?.addEventListener("click", () => {
     if (!regForm) return;
     if (hasProfile) hasProfile.hidden = true;
@@ -277,11 +327,9 @@ function main() {
     const p = getProfile();
     if (!p) return;
     const sv = (id, v) => { const el = qsId(id); if (el) el.value = v; };
-    sv("regPhone",    p.phone       || "");
-    sv("regEmail",    p.email       || "");
-    sv("regName",     p.name        || "");
-    sv("regDistrict", p.district    || "");
-    sv("regAddress",  p.addressLine || "");
+    sv("regPhone", p.phone || "");
+    sv("regEmail", p.email || "");
+    sv("regName",  p.name  || "");
   });
 
   clearBtn?.addEventListener("click", async () => {

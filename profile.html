@@ -83,6 +83,37 @@
       </nav>
     </header>
 
+    <!-- ── Profile promo banners (3x bigger, eye-catching) ── -->
+    <div class="profilePromo">
+      <a class="profilePromo__card profilePromo__card--membership" href="/profile.html?mode=signup">
+        <div class="profilePromo__inner">
+          <span class="profilePromo__tag">👑 MEMBERSHIP</span>
+          <h2 class="profilePromo__title">Гишүүнчлэлд нэгдэж<br>онцгой давуу эрх авах</h2>
+          <p class="profilePromo__sub">Зөвхөн гишүүдэд зориулсан хямдрал, купон</p>
+          <span class="profilePromo__cta">Нэгдэх →</span>
+        </div>
+        <div class="profilePromo__deco" aria-hidden="true">👑</div>
+      </a>
+      <a class="profilePromo__card profilePromo__card--coupon" href="/checkout.html">
+        <div class="profilePromo__inner">
+          <span class="profilePromo__tag">🎫 КУПОН</span>
+          <h2 class="profilePromo__title">Купон кодоо<br>хэрэглэж хэмнэ</h2>
+          <p class="profilePromo__sub">Checkout хэсэгт код оруулаад хямдрал авна уу</p>
+          <span class="profilePromo__cta">Захиалах →</span>
+        </div>
+        <div class="profilePromo__deco" aria-hidden="true">🎫</div>
+      </a>
+      <a class="profilePromo__card profilePromo__card--delivery" href="/#fast-delivery">
+        <div class="profilePromo__inner">
+          <span class="profilePromo__tag">🚀 ХУРДАН</span>
+          <h2 class="profilePromo__title">Өнөөдөр захиалж<br>маргааш хүлээн авна</h2>
+          <p class="profilePromo__sub">УБ хот дотор хурдан хүргэлтийн сонголт</p>
+          <span class="profilePromo__cta">Харах →</span>
+        </div>
+        <div class="profilePromo__deco" aria-hidden="true">🚀</div>
+      </a>
+    </div>
+
     <main class="page">
       <section class="panel">
         <div class="panel__head">
@@ -190,24 +221,70 @@
         </form>
 
         <div class="notice" data-has-profile hidden>
-          <div class="notice__title">Хадгалагдсан мэдээлэл</div>
+          <div class="notice__title">Миний мэдээлэл</div>
           <div class="notice__hint" data-profile-preview></div>
-          <div class="panel__actions">
+
+          <!-- Хүргэлтийн хаяг — нэвтэрсний дараа нэмнэ -->
+          <div class="profileAddrBlock" data-addr-block>
+            <!-- Хаяг байхгүй үед -->
+            <div data-no-addr>
+              <div class="profileAddrBlock__empty">
+                📍 Хүргэлтийн хаяг нэмэгдээгүй байна
+              </div>
+              <form class="profileAddrBlock__form" data-addr-save-form>
+                <div class="cFieldRow" style="margin-top:8px">
+                  <div class="cFieldRow__icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                  </div>
+                  <select class="cFieldRow__input" id="addrDistrict">
+                    <option value="">Дүүрэг сонгох…</option>
+                    <option>Sukhbaatar</option>
+                    <option>Chingeltei</option>
+                    <option>Bayangol</option>
+                    <option>Khan-Uul</option>
+                    <option>Bayanzurkh</option>
+                    <option>Songinokhairkhan</option>
+                  </select>
+                </div>
+                <div class="cFieldRow">
+                  <div class="cFieldRow__icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 22V12h6v10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                  </div>
+                  <input class="cFieldRow__input" id="addrLine" type="text" autocomplete="street-address" placeholder="Гудамж, байр, орц, тоот" />
+                  <button class="cFieldRow__iconBtn" type="button" data-clear-field="addrLine" aria-label="Арилгах">
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+                <div class="cLoginError" data-addr-error hidden></div>
+                <button class="cBtnPrimary" type="submit" style="margin-top:8px;height:44px;font-size:.88rem">
+                  📍 Хаяг хадгалах
+                </button>
+              </form>
+            </div>
+
+            <!-- Хаяг байгаа үед -->
+            <div data-has-addr hidden>
+              <div class="profileAddrBlock__current" data-addr-display></div>
+              <button class="profileAddrBlock__editBtn" type="button" data-edit-addr>Хаяг засах ✏️</button>
+            </div>
+          </div>
+
+          <div class="panel__actions" style="margin-top:12px">
             <a class="btn btn--primary" href="./checkout.html">Захиалах</a>
-            <button class="btn btn--ghost" type="button" data-edit>Засах</button>
-            <button class="btn btn--ghost" type="button" data-clear>Арилгах</button>
+            <button class="btn btn--ghost" type="button" data-edit>Мэдээлэл засах</button>
+            <button class="btn btn--ghost" type="button" data-clear>Гарах</button>
           </div>
         </div>
 
         <form class="cRegForm" data-register-form hidden>
 
-          <!-- Colorful HANMUN logo -->
+          <!-- Logo -->
           <div class="cRegLogo" aria-label="HANMUN">
             <span>H</span><span>A</span><span>N</span><span>M</span><span>U</span><span>N</span>
           </div>
-          <div class="cRegSubtitle">회원정보를 입력해주세요</div>
+          <div class="cRegSubtitle">Бүртгэл үүсгэх</div>
 
-          <!-- Email -->
+          <!-- И-мэйл -->
           <div class="cFieldRow">
             <div class="cFieldRow__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -215,15 +292,13 @@
                 <path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <input class="cFieldRow__input" id="regEmail" name="email" type="email" autocomplete="email" placeholder="아이디(이메일)" />
+            <input class="cFieldRow__input" id="regEmail" name="email" type="email" autocomplete="email" placeholder="И-мэйл хаяг" />
             <button class="cFieldRow__iconBtn" type="button" aria-label="Арилгах" data-clear-field="regEmail">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
           </div>
 
-          <!-- Password -->
+          <!-- Нууц үг -->
           <div class="cFieldRow">
             <div class="cFieldRow__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -231,7 +306,7 @@
                 <path d="M6 11h12v10H6z" fill="none" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <input class="cFieldRow__input" id="regPass" name="password" type="password" autocomplete="new-password" placeholder="비밀번호" />
+            <input class="cFieldRow__input" id="regPass" name="password" type="password" autocomplete="new-password" placeholder="Нууц үг (8+ тэмдэгт)" />
             <button class="cFieldRow__iconBtn" type="button" aria-label="Нууц үг харуулах" data-toggle-pw="regPass">
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -240,7 +315,7 @@
             </button>
           </div>
 
-          <!-- Confirm password -->
+          <!-- Нууц үг дахин -->
           <div class="cFieldRow">
             <div class="cFieldRow__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -248,7 +323,7 @@
                 <path d="M6 11h12v10H6z" fill="none" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <input class="cFieldRow__input" id="regPass2" name="password2" type="password" autocomplete="new-password" placeholder="비밀번호 확인" />
+            <input class="cFieldRow__input" id="regPass2" name="password2" type="password" autocomplete="new-password" placeholder="Нууц үг дахин оруулах" />
             <button class="cFieldRow__iconBtn" type="button" aria-label="Нууц үг харуулах" data-toggle-pw="regPass2">
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -257,7 +332,7 @@
             </button>
           </div>
 
-          <!-- Name -->
+          <!-- Нэр -->
           <div class="cFieldRow">
             <div class="cFieldRow__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -265,15 +340,13 @@
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <input class="cFieldRow__input" id="regName" name="name" type="text" autocomplete="name" placeholder="이름" />
+            <input class="cFieldRow__input" id="regName" name="name" type="text" autocomplete="name" placeholder="Бүтэн нэр" />
             <button class="cFieldRow__iconBtn" type="button" aria-label="Арилгах" data-clear-field="regName">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
           </div>
 
-          <!-- Phone -->
+          <!-- Утасны дугаар -->
           <div class="cFieldRow">
             <div class="cFieldRow__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -281,96 +354,13 @@
                 <path d="M10 6h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <input class="cFieldRow__input" id="regPhone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="휴대폰번호" />
+            <input class="cFieldRow__input" id="regPhone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="Утасны дугаар (8 оронтой)" />
             <button class="cFieldRow__iconBtn" type="button" aria-label="Арилгах" data-clear-field="regPhone">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
           </div>
 
-          <!-- Address section -->
-          <div class="cRegDivider">Хүргэлтийн хаяг</div>
-
-          <!-- District -->
-          <div class="cFieldRow">
-            <div class="cFieldRow__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="none" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </div>
-            <select class="cFieldRow__input" id="regDistrict" name="district" required>
-              <option value="">Дүүрэг сонгох…</option>
-              <option>Sukhbaatar</option>
-              <option>Chingeltei</option>
-              <option>Bayangol</option>
-              <option>Khan-Uul</option>
-              <option>Bayanzurkh</option>
-              <option>Songinokhairkhan</option>
-            </select>
-            <div class="cFieldRow__icon" aria-hidden="true" style="border-left:1px solid rgba(16,16,16,.12);">
-              <svg width="14" height="14" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </div>
-          </div>
-
-          <!-- Address line -->
-          <div class="cFieldRow">
-            <div class="cFieldRow__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M9 22V12h6v10" fill="none" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </div>
-            <input class="cFieldRow__input" id="regAddress" name="addressLine" type="text" autocomplete="street-address" placeholder="상세 주소 (Гудамж, байр, тоот)" />
-            <button class="cFieldRow__iconBtn" type="button" aria-label="Арилгах" data-clear-field="regAddress">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Agreements -->
-          <div class="cAgreements">
-            <label class="cAgreeAll">
-              <input type="checkbox" id="agreeAll" />
-              <span>모두 확인하였으며 동의합니다.</span>
-            </label>
-            <label class="cAgreeItem">
-              <span class="cAgreeItem__label">
-                <input type="checkbox" name="agree1" />
-                <span class="cAgreeItem__tag">[필수]</span>
-                <span>만 14세 이상입니다</span>
-              </span>
-              <span class="cAgreeItem__arrow">›</span>
-            </label>
-            <label class="cAgreeItem">
-              <span class="cAgreeItem__label">
-                <input type="checkbox" name="agree2" />
-                <span class="cAgreeItem__tag">[필수]</span>
-                <span>HANMUN 이용약관 동의</span>
-              </span>
-              <span class="cAgreeItem__arrow">›</span>
-            </label>
-            <label class="cAgreeItem">
-              <span class="cAgreeItem__label">
-                <input type="checkbox" name="agree3" />
-                <span class="cAgreeItem__tag">[필수]</span>
-                <span>개인정보 수집 및 이용 동의</span>
-              </span>
-              <span class="cAgreeItem__arrow">›</span>
-            </label>
-            <label class="cAgreeItem">
-              <span class="cAgreeItem__label">
-                <input type="checkbox" name="agree4" />
-                <span class="cAgreeItem__tag cAgreeItem__tag--opt">[선택]</span>
-                <span>마케팅 정보 수신 동의</span>
-              </span>
-              <span class="cAgreeItem__arrow">›</span>
-            </label>
-          </div>
-
-          <button class="cBtnPrimary" type="submit" style="margin-top:14px;">회원가입</button>
+          <button class="cBtnPrimary" type="submit" style="margin-top:14px;">Бүртгүүлэх</button>
 
           <div class="cLoginError" data-error hidden></div>
           <div class="cLogin__foot">© 2026 HANMUN. Бүх эрх хамгаалагдсан.</div>

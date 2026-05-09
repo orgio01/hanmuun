@@ -1,11 +1,25 @@
 import {
   FIREBASE_READY, fetchAllProducts, fetchAllUsers, setBanUser,
   addProduct, updateProduct, deleteProduct, uploadProductImage,
+  fetchPendingProducts, setProductStatus,
+  fetchAllBanners, saveBanner, deleteBanner,
+  fetchAllSellers, approveSellerAccount,
 } from "./firebase.js";
 import { apiJson } from "./api.js";
 
 // ── Config ────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "blackzebra617@gmail.com";
+const ADMIN_KEY   = "hanmun-admin-secret-2026";
+function adminApi(path, opts = {}) {
+  return fetch(path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", "x-admin-key": ADMIN_KEY, ...(opts.headers||{}) },
+  }).then(async r => {
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(d?.error?.message || `Error ${r.status}`);
+    return d;
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const qs  = (sel, r = document) => r.querySelector(sel);
@@ -97,7 +111,7 @@ qs("[data-logout]")?.addEventListener("click", async () => {
 });
 
 // ── Navigation ────────────────────────────────────────────────────────────
-const PAGE_TITLES = { dashboard: "Dashboard", products: "Бараа удирдлага", orders: "Захиалга удирдлага", users: "Хэрэглэгчид" };
+const PAGE_TITLES = { dashboard: "Dashboard", products: "Бараа удирдлага", orders: "Захиалга удирдлага", sellers: "Seller удирдлага", users: "Хэрэглэгчид", banners: "Banner удирдлага", pending: "Зөвшөөрөл хүлэх" };
 
 function navigateTo(page) {
   qsa("[data-admin-page]").forEach(p => p.hidden = p.dataset.adminPage !== page);
@@ -106,7 +120,10 @@ function navigateTo(page) {
   qs("[data-open-add-product]").hidden = page !== "products";
   if (page === "products") loadProducts();
   if (page === "orders")   loadOrders();
+  if (page === "sellers")  loadSellers();
   if (page === "users")    loadUsers();
+  if (page === "banners")  loadBanners();
+  if (page === "pending")  loadPending();
 }
 
 qsa("[data-nav]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); navigateTo(a.dataset.nav); }));
@@ -120,8 +137,21 @@ async function loadDashboard() {
     setText("[data-products-count]", ps.length);
     setText("[data-stat-lowstock]", ps.filter(p => p.stockQty <= 5).length);
   } catch {}
+
+  // Seller pending products count
   try {
-    const { orders } = await apiJson("/api/admin/orders");
+    const pending = await fetchPendingProducts();
+    setText("[data-pending-count]", pending.length || "0");
+  } catch {}
+
+  // Pending seller requests
+  try {
+    const sellers = await fetchAllSellers();
+    const pendingSellers = sellers.filter(s => !s.approved).length;
+    setText("[data-sellers-badge]", pendingSellers || "");
+  } catch {}
+  try {
+    const { orders } = await adminApi("/api/admin/orders");
     setText("[data-stat-orders]",  orders.length);
     setText("[data-orders-count]", orders.length);
     const revenue = orders.filter(o => o.paymentStatus === "paid").reduce((s, o) => s + o.totals.total, 0);
@@ -213,6 +243,7 @@ function openProductModal(product=null) {
   qs("[data-product-id]").value = product?.id||"";
   if (product) {
     const sv=(n,v)=>{const el=form.querySelector(`[name=${n}]`);if(el)el.value=v;};
+    sv("deliveryType",product.deliveryType||"");
     sv("name",product.name||""); sv("category",product.category||"");
     sv("price",product.price||""); sv("priceWas",product.priceWas||"");
     sv("stockQty",product.stockQty||0); sv("description",product.description||"");
@@ -247,6 +278,7 @@ qs("[data-product-form]")?.addEventListener("submit", async (e) => {
   const form=e.target, saveBtn=qs("[data-save-btn]"), err=qs("[data-form-error]"), id=qs("[data-product-id]")?.value;
   err.hidden=true; saveBtn.disabled=true; saveBtn.textContent="Хадгалж байна…";
   const data={
+    deliveryType:form.querySelector("[name=deliveryType]")?.value||"",
     name:form.querySelector("[name=name]").value.trim(), category:form.querySelector("[name=category]").value,
     price:Number(form.querySelector("[name=price]").value), priceWas:Number(form.querySelector("[name=priceWas]").value)||null,
     stockQty:Number(form.querySelector("[name=stockQty]").value), description:form.querySelector("[name=description]").value.trim(),
@@ -270,7 +302,7 @@ async function loadOrders() {
   const tbody = qs("[data-orders-tbody]");
   tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty">Уншиж байна…</td></tr>`;
   try {
-    const { orders } = await apiJson("/api/admin/orders");
+    const { orders } = await adminApi("/api/admin/orders");
     _allOrders = orders;
     _filteredOrders = orders;
     renderOrdersTable(orders);
@@ -352,7 +384,7 @@ document.addEventListener("click", async (e) => {
   btn.textContent = "Шинэчилж байна…";
 
   try {
-    await apiJson(`/api/admin/orders/${encodeURIComponent(orderNum)}/status`, {
+    await adminApi(`/api/admin/orders/${encodeURIComponent(orderNum)}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status: newStatus }),
     });
@@ -377,7 +409,7 @@ window.openOrderDetail = async function(orderNumber) {
   body.innerHTML = "Уншиж байна…";
   modal.hidden = false; document.body.style.overflow = "hidden";
   try {
-    const o = await apiJson(`/api/orders/${encodeURIComponent(orderNumber)}`);
+    const o = await adminApi(`/api/orders/${encodeURIComponent(orderNumber)}`);
     body.innerHTML = `
       <div class="adminOrderDetail">
         <div class="adminOrderDetail__row"><b>Захиалга №</b><span>${o.orderNumber}</span></div>
@@ -542,6 +574,378 @@ function showAdminToast(msg, type = "ok") {
   document.body.appendChild(wrap);
   setTimeout(() => { wrap.style.opacity="0"; wrap.style.transition="opacity 200ms ease"; setTimeout(()=>wrap.remove(),200); }, 2500);
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// PENDING PRODUCTS (Seller approval)
+// ══════════════════════════════════════════════════════════════════════════
+async function loadPending() {
+  const tbody = qs("[data-pending-tbody]");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty">Уншиж байна…</td></tr>`;
+
+  try {
+    const products = await fetchPendingProducts();
+    setText("[data-pending-count]", products.length || "0");
+
+    if (!products.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty">Зөвшөөрөл хүлэх бараа байхгүй байна ✓</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = products.map(p => `
+      <tr data-pending-row="${p.id}">
+        <td><img src="${p.imageUrl||''}" class="adminTable__thumb" onerror="this.style.display='none'"/></td>
+        <td>
+          <div class="adminTable__productName">${p.name}</div>
+          <div class="adminTable__productDesc">${(p.description||'').slice(0,60)}</div>
+        </td>
+        <td><span style="font-size:.82rem;font-weight:700;color:var(--c-blue)">${p.sellerName||'—'}</span></td>
+        <td><span class="adminBadge adminBadge--gray">${p.category||'—'}</span></td>
+        <td><strong>$${Number(p.price||0).toFixed(2)}</strong></td>
+        <td style="font-size:.78rem;color:rgba(16,16,16,.45)">${(p.createdAt||'').slice(0,10)}</td>
+        <td>
+          <div class="adminTable__actions">
+            <button class="adminStatusBtn" style="background:#19b37a" data-approve="${p.id}" title="Зөвшөөрөх">✓ Зөвшөөрөх</button>
+            <button class="adminTable__delBtn" data-reject="${p.id}" title="Татгалзах">✗</button>
+          </div>
+        </td>
+      </tr>`).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty adminTable__empty--error">Firebase алдаа: ${err.message}</td></tr>`;
+  }
+}
+
+// Approve / Reject delegation
+document.addEventListener("click", async (e) => {
+  const approveBtn = e.target.closest("[data-approve]");
+  if (approveBtn) {
+    const id = approveBtn.dataset.approve;
+    approveBtn.disabled = true; approveBtn.textContent = "…";
+    try {
+      await setProductStatus(id, "approved");
+      approveBtn.closest("[data-pending-row]")?.remove();
+      showAdminToast("✓ Бараа зөвшөөрөгдлөө", "ok");
+      const count = document.querySelectorAll("[data-pending-row]").length;
+      setText("[data-pending-count]", String(count || "0"));
+    } catch (err) { showAdminToast(err.message, "err"); approveBtn.disabled = false; approveBtn.textContent = "✓ Зөвшөөрөх"; }
+    return;
+  }
+  const rejectBtn = e.target.closest("[data-reject]");
+  if (rejectBtn) {
+    const id = rejectBtn.dataset.reject;
+    const note = prompt("Татгалзах шалтгаан (заавал биш):", "") ?? "";
+    if (note === null) return;
+    rejectBtn.disabled = true;
+    try {
+      await setProductStatus(id, "rejected", note);
+      rejectBtn.closest("[data-pending-row]")?.remove();
+      showAdminToast("Бараа татгалзагдлаа", "warn");
+      const count = document.querySelectorAll("[data-pending-row]").length;
+      setText("[data-pending-count]", String(count || "0"));
+    } catch (err) { showAdminToast(err.message, "err"); rejectBtn.disabled = false; }
+    return;
+  }
+});
+
+qs("[data-refresh-pending]")?.addEventListener("click", loadPending);
+
+// ══════════════════════════════════════════════════════════════════════════
+// SELLERS MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════
+let _allSellers = [];
+
+async function loadSellers() {
+  const tbody = qs("[data-sellers-tbody]");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="5" class="adminTable__empty">Уншиж байна…</td></tr>`;
+  try {
+    _allSellers = await fetchAllSellers();
+    // Pending count badge
+    const pending = _allSellers.filter(s => !s.approved).length;
+    setText("[data-sellers-badge]", pending || "");
+    renderSellersTable();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="adminTable__empty adminTable__empty--error">${err.message}</td></tr>`;
+  }
+}
+
+function renderSellersTable() {
+  const tbody = qs("[data-sellers-tbody]");
+  if (!tbody) return;
+  if (!_allSellers.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="adminTable__empty">Seller байхгүй байна</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = _allSellers.map(s => `
+    <tr>
+      <td>
+        <div style="font-weight:800;font-size:.88rem">${s.shopName || "—"}</div>
+        <div style="font-size:.74rem;color:var(--ad-muted)">${s.uid?.slice(0,12)}…</div>
+      </td>
+      <td style="font-size:.84rem">${s.email || "—"}</td>
+      <td style="font-size:.84rem">${s.phone || "—"}</td>
+      <td>
+        ${s.approved
+          ? `<span class="adminBadge adminBadge--green">✓ Зөвшөөрөгдсөн</span>`
+          : `<span class="adminBadge adminBadge--orange">⏳ Хүлээгдэж байна</span>`}
+      </td>
+      <td>
+        <div class="adminTable__actions">
+          ${!s.approved
+            ? `<button class="adminStatusBtn" data-approve-seller="${s.uid}">✓ Зөвшөөрөх</button>`
+            : `<button class="adminTable__delBtn" data-reject-seller="${s.uid}" title="Цуцлах">✗</button>`}
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+// Approve / Reject seller
+document.addEventListener("click", async (e) => {
+  const approveBtn = e.target.closest("[data-approve-seller]");
+  if (approveBtn) {
+    const uid = approveBtn.dataset.approveSeller;
+    approveBtn.disabled = true; approveBtn.textContent = "…";
+    try {
+      await approveSellerAccount(uid, true);
+      const s = _allSellers.find(x => x.uid === uid);
+      if (s) s.approved = true;
+      renderSellersTable();
+      showAdminToast("Seller зөвшөөрөгдлөө ✓", "ok");
+    } catch (err) { showAdminToast(err.message, "err"); approveBtn.disabled = false; approveBtn.textContent = "✓ Зөвшөөрөх"; }
+    return;
+  }
+  const rejectBtn = e.target.closest("[data-reject-seller]");
+  if (rejectBtn) {
+    if (!confirm("Seller-ийн эрхийг цуцлах уу?")) return;
+    const uid = rejectBtn.dataset.rejectSeller;
+    try {
+      await approveSellerAccount(uid, false);
+      const s = _allSellers.find(x => x.uid === uid);
+      if (s) s.approved = false;
+      renderSellersTable();
+      showAdminToast("Seller эрх цуцлагдлаа", "warn");
+    } catch (err) { showAdminToast(err.message, "err"); }
+    return;
+  }
+});
+
+qs("[data-refresh-sellers]")?.addEventListener("click", loadSellers);
+
+// ══════════════════════════════════════════════════════════════════════════
+// BANNER MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════
+
+// Зураг compress (Canvas)
+function compressBannerImg(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const maxW = 1440, maxH = 600;
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      const canvas = document.createElement("canvas");
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const isPng = file.type === "image/png"; resolve(isPng ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.95));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Зураг уншиж чадсангүй")); };
+    img.src = url;
+  });
+}
+
+let _banners = [];
+
+async function loadBanners() {
+  const tbody = qs("[data-banners-tbody]");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="4" class="adminTable__empty">Уншиж байна…</td></tr>`;
+  try {
+    _banners = await fetchAllBanners();
+    renderBannersTable();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="adminTable__empty adminTable__empty--error">${err.message}</td></tr>`;
+  }
+}
+
+function renderBannersTable() {
+  const tbody = qs("[data-banners-tbody]");
+  if (!tbody) return;
+  if (!_banners.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="adminTable__empty">Banner байхгүй. Шинэ banner нэмнэ үү.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = _banners.map(b => `
+    <tr data-banner-row="${b.id}">
+      <td>
+        ${b.imageUrl ? `<img src="${b.imageUrl}" style="width:140px;height:52px;object-fit:cover;border:1px solid var(--ad-border);display:block"/>` : `<span style="font-size:.8rem;color:var(--ad-muted)">Зураг байхгүй</span>`}
+      </td>
+      <td style="font-size:.82rem;color:var(--ad-muted)">
+        Дараалал: <strong>${b.order ?? "—"}</strong>
+      </td>
+      <td>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700">
+          <input type="checkbox" ${b.active ? "checked" : ""} data-toggle-banner="${b.id}" style="accent-color:var(--ad-blue);width:16px;height:16px"/>
+          ${b.active ? "Идэвхтэй" : "Идэвхгүй"}
+        </label>
+      </td>
+      <td>
+        <div class="adminTable__actions">
+          <button class="adminTable__editBtn" data-edit-banner="${b.id}" title="Засах">✏️</button>
+          <button class="adminTable__delBtn"  data-del-banner="${b.id}"  title="Устгах">🗑</button>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+// Add/Edit form
+const bannerFormWrap = qs("[data-banner-form-wrap]");
+const bannerForm     = qs("[data-banner-form]");
+
+function openBannerForm(banner = null) {
+  if (!bannerFormWrap || !bannerForm) return;
+  bannerForm.reset();
+  qs("[data-banner-id]").value = banner?.id || "";
+  qs("[data-banner-img-data]").value = banner?.imageUrl || "";
+  qs("[data-banner-form-title]").textContent = banner ? "Banner засах" : "Banner нэмэх";
+  qs("[data-banner-error]").hidden = true;
+
+  const prev = qs("[data-banner-preview]");
+  const img  = qs("[data-banner-preview-img]");
+  if (banner?.imageUrl && prev && img) {
+    img.src = banner.imageUrl; prev.hidden = false;
+  } else if (prev) {
+    prev.hidden = true;
+  }
+
+  if (banner) {
+    bannerForm.querySelector("[name=order]").value    = banner.order  ?? 1;
+    bannerForm.querySelector("[name=active]").checked = banner.active !== false;
+  }
+  bannerFormWrap.hidden = false;
+  bannerFormWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeBannerForm() {
+  if (bannerFormWrap) bannerFormWrap.hidden = true;
+}
+
+qs("[data-add-banner]")?.addEventListener("click", () => openBannerForm(null));
+qsa("[data-close-banner-form]").forEach(b => b.addEventListener("click", closeBannerForm));
+
+// Image file select → compress → preview
+qs("[data-banner-img-file]")?.addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const zone = qs("[data-banner-upload-hint]");
+  if (zone) zone.innerHTML = `<p style="margin:0;font-weight:700;color:var(--ad-blue)">⏳ Боловсруулж байна…</p>`;
+  try {
+    const compressed = await compressBannerImg(file);
+    qs("[data-banner-img-data]").value = compressed;
+    const prev = qs("[data-banner-preview]");
+    const img  = qs("[data-banner-preview-img]");
+    if (prev && img) { img.src = compressed; prev.hidden = false; }
+    if (zone) zone.innerHTML = `<p style="margin:0;font-weight:800;color:var(--ad-blue)">✓ ${file.name}</p><p style="margin:4px 0 0;font-size:.78rem;color:var(--ad-muted)">Зураг бэлэн болов</p>`;
+  } catch (err) {
+    if (zone) zone.innerHTML = `<p style="margin:0;color:#dc2626;font-weight:700">❌ ${err.message}</p>`;
+  }
+});
+
+// Clear image
+qs("[data-clear-banner-img]")?.addEventListener("click", () => {
+  qs("[data-banner-img-data]").value = "";
+  qs("[data-banner-preview]").hidden = true;
+  qs("[data-banner-img-file]").value = "";
+  qs("[data-banner-upload-hint]").innerHTML = `
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p style="margin:8px 0 4px;font-weight:800">Зураг сонгох эсвэл чирж тавих</p>
+    <p style="margin:0;font-size:.8rem;color:var(--ad-muted)">JPG, PNG, WEBP — 1280×520px хамгийн сайн</p>`;
+});
+
+// Drag & drop support
+qs("[data-banner-upload-zone]")?.addEventListener("dragover", (e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--c-blue)"; });
+qs("[data-banner-upload-zone]")?.addEventListener("dragleave", (e) => { e.currentTarget.style.borderColor = ""; });
+qs("[data-banner-upload-zone]")?.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = "";
+  const file = e.dataTransfer.files?.[0];
+  if (!file || !file.type.startsWith("image/")) return;
+  const input = qs("[data-banner-img-file]");
+  const dt    = new DataTransfer();
+  dt.items.add(file);
+  if (input) { input.files = dt.files; input.dispatchEvent(new Event("change")); }
+});
+
+// Form submit
+bannerForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errEl   = qs("[data-banner-error]");
+  const saveBtn = qs("[data-banner-save]");
+  errEl.hidden = true;
+  saveBtn.disabled = true; saveBtn.textContent = "Хадгалж байна…";
+
+  const id       = qs("[data-banner-id]").value || null;
+  const imageUrl = qs("[data-banner-img-data]").value || "";
+
+  if (!imageUrl && !id) {
+    errEl.textContent = "Зураг сонгоно уу."; errEl.hidden = false;
+    saveBtn.disabled = false; saveBtn.textContent = "Хадгалах";
+    return;
+  }
+
+  const data = {
+    imageUrl,
+    order:  Number(bannerForm.querySelector("[name=order]").value) || 1,
+    active: bannerForm.querySelector("[name=active]").checked,
+  };
+  if (!imageUrl && id) delete data.imageUrl; // зураг солиогүй үед хэвээр үлдэнэ
+
+  try {
+    await saveBanner(id, data);
+    _banners = await fetchAllBanners();
+    renderBannersTable();
+    closeBannerForm();
+    showAdminToast("Banner хадгалагдлаа ✓", "ok");
+  } catch (err) {
+    console.error("Banner save error:", err);
+    errEl.textContent = "Алдаа: " + (err.message || err.code || "тодорхойгүй");
+    errEl.hidden = false;
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = "Хадгалах";
+  }
+});
+
+// Delegation: edit / delete / toggle
+document.addEventListener("click", async (e) => {
+  const editB = e.target.closest("[data-edit-banner]");
+  if (editB) { openBannerForm(_banners.find(b => b.id === editB.dataset.editBanner)); return; }
+
+  const delB = e.target.closest("[data-del-banner]");
+  if (delB) {
+    if (!confirm("Banner устгах уу?")) return;
+    try {
+      await deleteBanner(delB.dataset.delBanner);
+      _banners = _banners.filter(b => b.id !== delB.dataset.delBanner);
+      renderBannersTable();
+      showAdminToast("Устгагдлаа");
+    } catch (err) { showAdminToast(err.message, "err"); }
+    return;
+  }
+});
+
+document.addEventListener("change", async (e) => {
+  const tog = e.target.closest("[data-toggle-banner]");
+  if (!tog) return;
+  const id = tog.dataset.toggleBanner;
+  const b  = _banners.find(x => x.id === id);
+  if (!b) return;
+  try {
+    await saveBanner(id, { active: tog.checked });
+    b.active = tog.checked;
+    showAdminToast(tog.checked ? "Идэвхжлээ ✓" : "Идэвхгүй болов", "ok");
+  } catch (err) { showAdminToast(err.message, "err"); }
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────
 checkAuth();

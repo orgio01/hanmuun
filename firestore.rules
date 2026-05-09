@@ -1,27 +1,83 @@
-// ── Firestore Security Rules — HANMUN ─────────────────────────────────────
-//
-// Firebase Console → Firestore → Rules дээр энэ rules-г paste хийнэ.
-//
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Products (бараа) ───────────────────────────────────────────────────
-    // Бүх хүн уншиж болно, зөвхөн admin бичиж болно
+    // ── Admin email ──────────────────────────────────────────────────────
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == "blackzebra617@gmail.com";
+    }
+
+    // ── Authenticated user ───────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Products ─────────────────────────────────────────────────────────
     match /products/{productId} {
-      allow read:  if true;
-      allow write: if request.auth != null
-                   && request.auth.token.email == "blackzebra617@gmail.com";
+      // Anyone can read approved products
+      allow read: if true;
+
+      // Admin can do anything
+      allow write: if isAdmin();
+
+      // Sellers can CREATE (status must be "pending", sellerId must be their uid)
+      allow create: if isAuth()
+                    && request.resource.data.status == "pending"
+                    && request.resource.data.sellerId == request.auth.uid;
+
+      // Sellers can UPDATE only their own pending products
+      allow update: if isAuth()
+                    && resource.data.sellerId == request.auth.uid
+                    && resource.data.status == "pending"
+                    && request.resource.data.status == "pending";
+
+      // Sellers can DELETE their own pending products
+      allow delete: if isAuth()
+                    && resource.data.sellerId == request.auth.uid
+                    && resource.data.status == "pending";
     }
 
-    // ── Users (хэрэглэгчийн профайл) ──────────────────────────────────────
-    // Зөвхөн эзэн нь унших/бичих боломжтой
+    // ── Sellers collection ───────────────────────────────────────────────
+    match /sellers/{uid} {
+      // Seller өөрийн мэдээлэл унших
+      allow read: if isAuth() && request.auth.uid == uid;
+      // Seller бүртгэл үүсгэх (approved хэзээ ч true биш)
+      allow create: if isAuth() && request.auth.uid == uid
+                    && request.resource.data.approved == false;
+      // Seller approved-г өөрчлөх эрхгүй
+      allow update: if isAuth() && request.auth.uid == uid
+                    && request.resource.data.approved == resource.data.approved;
+      // Admin бүх зүйл
+      allow read, write: if isAdmin();
+    }
+
+    // ── Users collection ────────────────────────────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read, write: if isAuth() && request.auth.uid == userId;
+      allow read, write: if isAdmin();
     }
 
-    // ── Default: бусад бүгдийг хаах ───────────────────────────────────────
+    // ── Reviews ─────────────────────────────────────────────────────────
+    match /reviews/{productId}/items/{uid} {
+      allow read: if true;
+      allow write: if isAuth() && request.auth.uid == uid;
+      allow delete: if isAdmin();
+    }
+
+    // ── Coupons ─────────────────────────────────────────────────────────
+    match /coupons/{code} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── Banners ──────────────────────────────────────────────────────────
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Default: block all ───────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

@@ -4,37 +4,66 @@ import { updateCartBadge, showToast, initSearchNav } from "./common.js";
 
 // ── Category metadata ─────────────────────────────────────────────────────
 const META = {
-  electronics: { label: "Цахилгаан бараа",          icon: "⚡" },
+  electronics: { label: "Цахилгаан бараа",           icon: "⚡" },
   fashion:     { label: "Хувцас / Гутал / Аксессуар", icon: "👗" },
-  beauty:      { label: "Гоо сайхан",                icon: "💄" },
+  beauty:      { label: "Гоо сайхан",                 icon: "💄" },
   home:        { label: "Гэр, Ахуй",                  icon: "🏠" },
   sports:      { label: "Спорт / Чөлөөт цаг",         icon: "⚽" },
-  baby:        { label: "Ээж, хүүхэд",               icon: "👶" },
-  food:        { label: "Хүнс",                       icon: "🛒" },
-  auto:        { label: "Авто хэрэгсэл",              icon: "🚗" },
-  books:       { label: "Ном / Хөгжим",               icon: "📚" },
-  pets:        { label: "Амьтны хэрэгсэл",            icon: "🐾" },
-  health:      { label: "Эрүүл мэнд",                 icon: "💊" },
-  travel:      { label: "Аялал",                      icon: "✈️"  },
+  baby:        { label: "Ээж, хүүхэд",                icon: "👶" },
+  food:        { label: "Хүнс",                        icon: "🛒" },
+  auto:        { label: "Авто хэрэгсэл",               icon: "🚗" },
+  books:       { label: "Ном / Хөгжим",                icon: "📚" },
+  pets:        { label: "Амьтны хэрэгсэл",             icon: "🐾" },
+  health:      { label: "Эрүүл мэнд",                  icon: "💊" },
+  travel:      { label: "Аялал",                       icon: "✈️" },
+};
+
+// Section (limited / fast / intl) metadata
+const SECTION_META = {
+  limited: { label: "Хязгаарлагдмал санал", icon: "⚡" },
+  fast:    { label: "Speed хүргэлт",         icon: "🏎️" },
+  intl:    { label: "Гадаадаас",             icon: "✈️" },
 };
 
 const fmt = (v) => `$${Number(v).toFixed(2)}`;
 
-// ── Get category from URL /category/:name ─────────────────────────────────
-function getCategory() {
-  const m = window.location.pathname.match(/^\/category\/(.+)$/);
-  return m ? decodeURIComponent(m[1]) : "";
+// ── Detect URL: /category/:name  OR  /section/:key ───────────────────────
+function getSource() {
+  const catM  = window.location.pathname.match(/^\/category\/(.+)$/);
+  if (catM)  return { type: "category", key: decodeURIComponent(catM[1]) };
+  const sectM = window.location.pathname.match(/^\/section\/(.+)$/);
+  if (sectM) return { type: "section",  key: decodeURIComponent(sectM[1]) };
+  return null;
 }
 
-// ── Fetch: Firebase → local API fallback ──────────────────────────────────
-async function fetchProducts(category) {
+// Section → deliveryType mapping
+const SECTION_TYPES = {
+  limited: ["24h"],
+  fast:    ["express", "24h"],
+  intl:    ["international"],
+};
+
+// ── Fetch: section → Firestore (Firebase байвал), үгүй бол local API ─────
+async function fetchBySection(key) {
   try {
-    const { fetchProductsByCategory } = await import("./firebase.js");
-    return await fetchProductsByCategory(category);
-  } catch {
-    const data = await apiJson(`/api/products?category=${encodeURIComponent(category)}`);
-    return data.items || [];
-  }
+    const { FIREBASE_READY, fetchAllProducts } = await import("./firebase.js");
+    if (FIREBASE_READY) {
+      const all    = await fetchAllProducts();
+      const types  = SECTION_TYPES[key] || [];
+      const result = types.length ? all.filter(p => types.includes(p.deliveryType)) : all;
+      return result;
+    }
+  } catch {}
+  // Local API fallback
+  const data = await apiJson("/api/sections");
+  return data[key] || [];
+}
+
+async function fetchProducts(category) {
+  const { FIREBASE_READY, fetchProductsByCategory } = await import("./firebase.js");
+  if (FIREBASE_READY) return await fetchProductsByCategory(category);
+  const data = await apiJson(`/api/products?category=${encodeURIComponent(category)}`);
+  return data.items || [];
 }
 
 // ── Sorting ───────────────────────────────────────────────────────────────
@@ -131,13 +160,18 @@ async function main() {
   updateCartBadge();
   wireCart();
 
-  const category = getCategory();
-  if (!category) { window.location.href = "/"; return; }
+  const source = getSource();
+  if (!source) { window.location.href = "/"; return; }
 
-  const key  = category.toLowerCase();
-  const meta = META[key] || { label: category, icon: "🏷" };
+  // Determine metadata (label, icon)
+  let meta;
+  if (source.type === "section") {
+    meta = SECTION_META[source.key] || { label: source.key, icon: "🏷" };
+  } else {
+    const key = source.key.toLowerCase();
+    meta = META[key] || { label: source.key, icon: "🏷" };
+  }
 
-  // Set titles
   document.title = `${meta.label} — HANMUN`;
   const setText = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = v; };
   setText("[data-cat-name]",  meta.label);
@@ -149,9 +183,10 @@ async function main() {
   const countEl = document.querySelector("[data-cat-count]");
 
   let products = [];
-
   try {
-    products = await fetchProducts(category);
+    products = source.type === "section"
+      ? await fetchBySection(source.key)
+      : await fetchProducts(source.key);
   } catch (err) {
     if (grid) grid.innerHTML = `<p class="catPage__errorMsg">Бараа ачаалж чадсангүй.</p>`;
     return;

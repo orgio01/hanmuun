@@ -1,5 +1,6 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
 function formatMoney(value) {
   return `$${value.toFixed(2)}`;
@@ -98,10 +99,18 @@ function createProductCard(product) {
 
   const pillClass = product.badgeTone ? `pill--${product.badgeTone}` : "";
 
+  const DELIVERY_LABELS = {
+    "24h":           { icon: "⚡", text: "24 цагт хүргэнэ" },
+    "express":       { icon: "🏎️", text: "Express хүргэлт" },
+    "international": { icon: "✈️", text: "7-14 хоногт ирнэ" },
+    "reorder":       { icon: "🔄", text: "Дахин захиалах" },
+  };
+  const dl = DELIVERY_LABELS[product.deliveryType] || null;
+
   el.innerHTML = `
     <a class="card__imgLink" href="/product/${encodeURIComponent(product.id)}" tabindex="-1" aria-hidden="true">
       <div class="card__imgWrap">
-        <img class="card__img" alt="${product.name}" src="${product.imageUrl}" loading="lazy" />
+        <img class="card__img" alt="${esc(product.name)}" src="${esc(product.imageUrl)}" loading="lazy" />
         ${
           product.badge
             ? `<span class="pill card__imgBadge ${pillClass}">${product.badge}</span>`
@@ -112,7 +121,7 @@ function createProductCard(product) {
 
     <div class="card__body">
       <h3 class="card__title">
-        <a class="card__titleLink" href="/product/${encodeURIComponent(product.id)}">${product.name}</a>
+        <a class="card__titleLink" href="/product/${encodeURIComponent(product.id)}">${esc(product.name)}</a>
       </h3>
 
       <div class="card__price">
@@ -128,6 +137,7 @@ function createProductCard(product) {
         }
       </div>
 
+      ${dl ? `<div class="card__delivery"><span class="card__deliveryIcon">${dl.icon}</span>${dl.text}</div>` : ""}
       <div class="card__cta">
         <button class="mini-btn mini-btn--primary" type="button" data-add-to-cart>
           Сагсанд нэмэх
@@ -248,7 +258,7 @@ function initBanner() {
     dots: $("[data-banner-dots]"),
     slideSelector: ".banner__slide",
     dotClass: "bannerDot",
-    intervalMs: 4500,
+    intervalMs: 2000,
   });
 }
 
@@ -628,13 +638,90 @@ function initSearchSuggest(getProducts) {
 }
 
 
+function setHeaderVar() {
+  const h = (document.querySelector(".topbar")?.offsetHeight || 0) +
+            (document.querySelector(".quickNav")?.offsetHeight || 0);
+  document.documentElement.style.setProperty("--header-h", h + "px");
+}
+
+let _bannerInited = false;
+let _bannerTimer  = null; // carousel interval — leak сэргийлэх
+
+function stopBannerTimer() {
+  if (_bannerTimer) { window.clearInterval(_bannerTimer); _bannerTimer = null; }
+}
+
+function renderBannerSlides(banners) {
+  const track = $("[data-banner-track]");
+  const dots  = $("[data-banner-dots]");
+  if (!track || !banners.length) return false;
+
+  // createElement ашиглана — base64 HTML-д задрахгүй
+  track.innerHTML = "";
+  banners.forEach((b, i) => {
+    const slide = document.createElement("div");
+    slide.className = "banner__slide" + (i === 0 ? " is-active" : "");
+
+    if (b.imageUrl) {
+      // Зураг img tag-аар оруулна (background-image CSS биш)
+      const img = document.createElement("img");
+      img.src = b.imageUrl;
+      img.alt = "";
+      img.style.cssText = [
+        "position:absolute", "inset:0",
+        "width:100%", "height:100%",
+        "object-fit:cover", "object-position:center",
+        "display:block",
+      ].join(";");
+      slide.style.position = "relative";
+      slide.appendChild(img);
+
+      // Бага зэрэг overlay
+      const overlay = document.createElement("div");
+      overlay.style.cssText = "position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.15),rgba(0,0,0,.02));pointer-events:none";
+      slide.appendChild(overlay);
+    }
+
+    track.appendChild(slide);
+  });
+
+  if (dots) dots.innerHTML = "";
+  return true;
+}
+
+async function loadFirebaseBanners() {
+  try {
+    const { FIREBASE_READY, watchBanners } = await import("./js/firebase.js");
+    if (!FIREBASE_READY) return false;
+
+    watchBanners((banners) => {
+      stopBannerTimer(); // хуучин interval цэвэрлэх
+      if (!banners.length) {
+        initBanner(); _bannerInited = true; return;
+      }
+      if (renderBannerSlides(banners)) {
+        initBanner();
+        _bannerInited = true;
+      }
+    });
+
+    return true;
+  } catch { return false; }
+}
+
 async function main() {
   initMenu();
   initInteractions();
-  initBanner();
-  initHeroCarousel();
+  // Hero section устгасан — initHeroCarousel хэрэггүй
   initVoiceSearch();
   updateCartBadge();
+  setHeaderVar();
+  window.addEventListener("resize", setHeaderVar);
+
+  // Banner: Firebase real-time listener эхлүүлнэ
+  // watchBanners callback дотор initBanner дуудагдана
+  const fbStarted = await loadFirebaseBanners();
+  if (!fbStarted) { initBanner(); _bannerInited = true; }
 
   let productsCache = null;
   const getProducts = async () => {
@@ -660,40 +747,7 @@ async function main() {
   initSearchSuggest(getProducts);
   initSearchFromUrl();
 
-  // Sections (Flash sale, Fast delivery) — server API-аас
-  try {
-    const data = await apiJson("/api/sections");
-    renderSection("deals", data.deals || []);
-    renderSection("limited", data.limited || []);
-    renderSection("fast", data.fast || []);
-    renderSection("intl", data.intl || []);
-
-    const cd = $("[data-flash-countdown]");
-    if (cd) {
-      const ends = (data.limited || []).map((x) => Number(x.endsAt)).filter((n) => Number.isFinite(n) && n > 0);
-      const minEnd = ends.length ? Math.min(...ends) : null;
-      if (minEnd) {
-        const tick = () => (cd.textContent = formatCountdown(minEnd - Date.now()));
-        tick();
-        window.setInterval(tick, 250);
-      }
-    }
-  } catch {
-    // Server offline — sections хоосон, products grid Firestore-оос харагдана
-  }
-
-  // Бүх бараа grid — Firestore эхэлж, дараа local API
-  const grid = $("[data-products-grid]");
-  if (grid) {
-    const items = await getProducts();
-    if (items.length) {
-      grid.replaceChildren(...items.map(createProductCard));
-    } else {
-      grid.innerHTML = `<p style="grid-column:1/-1;padding:24px;color:rgba(16,16,16,.45);font-weight:650">
-        Бараа олдсонгүй. Firestore-д бараа нэмнэ үү.
-      </p>`;
-    }
-  }
+  // Sections хожим нэмэгдэнэ
 
   initCountdowns();
   syncWishButtons();

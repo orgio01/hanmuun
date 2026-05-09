@@ -31,9 +31,23 @@
         Захиалга
         <span class="adminNav__badge adminNav__badge--warn" data-orders-count>—</span>
       </a>
+      <a class="adminNav__item" href="#" data-nav="sellers">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        Seller-ууд
+        <span class="adminNav__badge adminNav__badge--warn" data-sellers-badge></span>
+      </a>
       <a class="adminNav__item" href="#" data-nav="users">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Хэрэглэгчид
+      </a>
+      <a class="adminNav__item" href="#" data-nav="banners">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 13l4-4 4 4 4-5 4 5"/></svg>
+        Banner
+      </a>
+      <a class="adminNav__item" href="#" data-nav="pending">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Зөвшөөрөл хүлэх
+        <span class="adminNav__badge adminNav__badge--warn" data-pending-count>—</span>
       </a>
     </nav>
 
@@ -252,6 +266,142 @@
       </div>
     </section>
 
+    <!-- ── Banner Management ─────────────────────────────────── -->
+    <section class="adminPage" data-admin-page="banners" hidden>
+
+      <div class="adminCard__toolbar">
+        <h2 style="margin:0;font-size:.95rem;font-weight:900;color:var(--ad-text)">Нүүр хуудасны banner зургууд</h2>
+        <button class="adminTopbar__addBtn" type="button" data-add-banner>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+          Banner нэмэх
+        </button>
+      </div>
+
+      <!-- Banner list -->
+      <div class="adminCard" style="margin-bottom:20px">
+        <div class="adminTableWrap">
+          <table class="adminTable">
+            <thead>
+              <tr>
+                <th style="width:200px">Зураг</th>
+                <th>Мэдээлэл</th>
+                <th style="width:100px">Идэвхтэй</th>
+                <th style="width:100px">Үйлдэл</th>
+              </tr>
+            </thead>
+            <tbody data-banners-tbody>
+              <tr><td colspan="5" class="adminTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add/Edit form -->
+      <div class="adminCard" data-banner-form-wrap hidden>
+        <div class="adminCard__head">
+          <h2 class="adminCard__title" data-banner-form-title>Banner нэмэх</h2>
+          <button class="adminTable__editBtn" type="button" data-close-banner-form>✕</button>
+        </div>
+        <form style="padding:20px;display:grid;gap:16px" data-banner-form>
+          <input type="hidden" data-banner-id />
+          <input type="hidden" data-banner-img-data />
+
+          <!-- Зураг upload -->
+          <div class="adminField">
+            <label class="adminField__label">Banner зураг *</label>
+            <label class="bannerUploadZone" data-banner-upload-zone>
+              <input type="file" accept="image/*" data-banner-img-file style="display:none"/>
+              <div data-banner-upload-hint>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p style="margin:8px 0 4px;font-weight:800">Зураг сонгох эсвэл чирж тавих</p>
+                <p style="margin:0;font-size:.8rem;color:var(--ad-muted)">JPG, PNG, WEBP — 1280×520px хамгийн сайн</p>
+              </div>
+            </label>
+            <div data-banner-preview hidden style="margin-top:8px;position:relative;border:1px solid var(--ad-border)">
+              <img data-banner-preview-img src="" alt="Preview"
+                style="width:100%;max-height:240px;object-fit:cover;display:block"/>
+              <button type="button" data-clear-banner-img
+                style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:0;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;display:grid;place-items:center">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:20px">
+            <div class="adminField" style="width:120px">
+              <label class="adminField__label">Дараалал</label>
+              <input class="adminField__input" name="order" type="number" value="1" min="1"/>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:18px">
+              <input type="checkbox" name="active" checked style="width:18px;height:18px;accent-color:var(--c-blue)"/>
+              Идэвхтэй
+            </label>
+          </div>
+
+          <div class="adminModal__error" data-banner-error hidden></div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button class="adminModal__cancelBtn" type="button" data-close-banner-form>Болих</button>
+            <button class="adminModal__saveBtn" type="submit" data-banner-save>Хадгалах</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ── Sellers Management ────────────────────────────────── -->
+    <section class="adminPage" data-admin-page="sellers" hidden>
+      <div class="adminCard">
+        <div class="adminCard__head">
+          <h2 class="adminCard__title">Seller хүсэлтүүд</h2>
+          <button class="adminTopbar__addBtn" type="button" data-refresh-sellers style="font-size:.8rem;padding:6px 12px">↻ Шинэчлэх</button>
+        </div>
+        <div class="adminTableWrap">
+          <table class="adminTable">
+            <thead>
+              <tr>
+                <th>Дэлгүүр</th>
+                <th>И-мэйл</th>
+                <th>Утас</th>
+                <th>Байдал</th>
+                <th style="width:160px">Үйлдэл</th>
+              </tr>
+            </thead>
+            <tbody data-sellers-tbody>
+              <tr><td colspan="5" class="adminTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pending Products (seller approval) ────────────────── -->
+    <section class="adminPage" data-admin-page="pending" hidden>
+      <div class="adminCard">
+        <div class="adminCard__head">
+          <h2 class="adminCard__title">Seller-ийн бараа — баталгаажуулалт хүлэх</h2>
+          <button class="adminTopbar__addBtn" type="button" data-refresh-pending style="font-size:.8rem;padding:6px 12px">↻ Шинэчлэх</button>
+        </div>
+        <div class="adminTableWrap">
+          <table class="adminTable">
+            <thead>
+              <tr>
+                <th style="width:56px">Зураг</th>
+                <th>Нэр / Тайлбар</th>
+                <th>Seller</th>
+                <th>Ангилал</th>
+                <th>Үнэ</th>
+                <th>Огноо</th>
+                <th style="min-width:160px">Үйлдэл</th>
+              </tr>
+            </thead>
+            <tbody data-pending-tbody>
+              <tr><td colspan="7" class="adminTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <!-- ── Product Modal ────────────────────────────────────────────── -->
@@ -278,6 +428,15 @@
               <option>Beauty</option>
               <option>Home</option>
               <option>Sports</option>
+              <option>Baby</option>
+              <option>Food</option>
+              <option>Auto</option>
+              <option>Books</option>
+              <option>Toys</option>
+              <option>Office</option>
+              <option>Pets</option>
+              <option>Health</option>
+              <option>Travel</option>
             </select>
           </div>
         </div>
@@ -310,9 +469,21 @@
             </label>
           </div>
         </div>
-        <div class="adminField">
-          <label class="adminField__label">Tags (таслалаар)</label>
-          <input class="adminField__input" name="tags" placeholder="electronics, headset, audio" />
+        <div class="adminFormRow">
+          <div class="adminField">
+            <label class="adminField__label">Хүргэлтийн төрөл</label>
+            <select class="adminField__input" name="deliveryType">
+              <option value="">— Сонгох —</option>
+              <option value="24h">⚡ 24 цагийн хүргэлт</option>
+              <option value="express">🏎️ Speed хүргэлт</option>
+              <option value="international">✈️ Гадаадаас ирэх</option>
+              <option value="reorder">🔄 Дахин авах боломжтой</option>
+            </select>
+          </div>
+          <div class="adminField">
+            <label class="adminField__label">Tags (таслалаар)</label>
+            <input class="adminField__input" name="tags" placeholder="electronics, headset, audio" />
+          </div>
         </div>
         <div class="adminModal__error" data-form-error hidden></div>
         <div class="adminModal__foot">

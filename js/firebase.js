@@ -22,7 +22,7 @@ import {
   getFirestore,
   doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
   collection, query, where, getDocs, orderBy, limit,
-  serverTimestamp,
+  onSnapshot, serverTimestamp,
 } from
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from
@@ -52,47 +52,70 @@ export function getDb()   { if (!_db)   _db   = getFirestore(getFirebaseApp()); 
 export function getAuth_() { if (!_auth) _auth  = getAuth(getFirebaseApp());      return _auth; }
 
 // ─── Product helpers ──────────────────────────────────────────────────────
+function placeholderUrl(name) {
+  const initial = (name || "?")[0].toUpperCase();
+  const colors  = ["#6a7dff","#2ee6a6","#ffbf4a","#e8232a","#0074e9","#9c27b0"];
+  const bg      = colors[initial.charCodeAt(0) % colors.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">
+    <rect width="400" height="300" fill="${bg}" opacity="0.15"/>
+    <rect width="400" height="300" fill="url(#g)"/>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${bg}" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="${bg}" stop-opacity="0.05"/>
+    </linearGradient></defs>
+    <text x="200" y="175" text-anchor="middle" fill="${bg}" font-size="100"
+      font-family="system-ui,sans-serif" font-weight="900" opacity="0.5">${initial}</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 function mapProduct(snap) {
   const d = snap.data();
+  const name = d.name ?? "";
   return {
     id:          snap.id,
-    name:        d.name        ?? "",
+    name,
     description: d.description ?? "",
     price:       Number(d.price    ?? 0),
-    priceWas:    d.priceWas != null ? Number(d.priceWas) : null,
-    imageUrl:    d.imageUrl    ?? "",
+    priceWas:    d.priceWas ? Number(d.priceWas) : null,
+    imageUrl:    d.imageUrl || placeholderUrl(name),
     category:    d.category    ?? "",
     stockQty:    Number(d.stockQty  ?? 0),
-    badge:       d.badge       ?? null,
-    badgeTone:   d.badgeTone   ?? null,
-    tags:        Array.isArray(d.tags) ? d.tags : [],
+    badge:        d.badge        ?? null,
+    badgeTone:    d.badgeTone    ?? null,
+    deliveryType: d.deliveryType ?? "",
+    tags:         Array.isArray(d.tags) ? d.tags : [],
   };
 }
 
-/** Нэг бараа ID-аар авах */
+/** Нэг бараа ID-аар авах (approved болон pending хоёуланг) */
 export async function fetchProductFirebase(id) {
   if (!FIREBASE_READY) throw new Error("not-configured");
   const snap = await getDoc(doc(getDb(), "products", id));
   if (!snap.exists()) throw new Error(`Product "${id}" not found`);
-  return mapProduct(snap);
+  const p = mapProduct(snap);
+  if (p.status && p.status !== "approved") throw new Error("Бараа баталгаажаагүй байна.");
+  return p;
 }
 
 /** Ангиллаар шүүж авах */
 export async function fetchProductsByCategory(category) {
   if (!FIREBASE_READY) throw new Error("not-configured");
-  const q = query(
-    collection(getDb(), "products"),
-    where("category", "==", category),
-    orderBy("name"),
+  // Composite index шаардахгүйн тулд approved бараа авч category-аар шүүнэ
+  const snap = await getDocs(
+    query(collection(getDb(), "products"), where("status", "==", "approved"))
   );
-  const snap = await getDocs(q);
-  return snap.docs.map(mapProduct);
+  return snap.docs.map(mapProduct)
+    .filter(p => p.category === category)
+    .sort((a, b) => a.name.localeCompare(b.name, "mn"));
 }
 
-/** Бүх бараа авах */
+/** Зөвхөн approved бараа авах (нүүр хуудас, хайлт) */
 export async function fetchAllProducts() {
   if (!FIREBASE_READY) throw new Error("not-configured");
-  const snap = await getDocs(collection(getDb(), "products"));
+  const snap = await getDocs(
+    query(collection(getDb(), "products"), where("status", "==", "approved"))
+  );
   return snap.docs.map(mapProduct);
 }
 
@@ -127,6 +150,22 @@ export async function getUserProfile(uid) {
   if (!FIREBASE_READY) return null;
   const snap = await getDoc(doc(getDb(), "users", uid));
   return snap.exists() ? snap.data() : null;
+}
+
+/** Бүх seller-ийн жагсаалт (admin) */
+export async function fetchAllSellers() {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const snap = await getDocs(collection(getDb(), "sellers"));
+  const docs = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  return docs.sort((a, b) => (a.approved === b.approved ? 0 : a.approved ? 1 : -1));
+}
+
+/** Seller зөвшөөрөх / хааx */
+export async function approveSellerAccount(uid, approved) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  await updateDoc(doc(getDb(), "sellers", uid), {
+    approved, updatedAt: new Date().toISOString(),
+  });
 }
 
 /** Бүх хэрэглэгчдийн жагсаалт (admin) */
@@ -187,6 +226,102 @@ export async function incrementCouponUsage(code) {
   if (snap.exists()) {
     await updateDoc(ref_, { usedCount: (snap.data().usedCount || 0) + 1 });
   }
+}
+
+// ─── Banner functions ────────────────────────────────────────────────────
+export async function fetchBanners() {
+  if (!FIREBASE_READY) return [];
+  const snap = await getDocs(
+    query(collection(getDb(), "banners"), where("active", "==", true))
+  );
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return docs.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+}
+
+/** Real-time banner listener — admin өөрчлөхөд автоматаар шинэчлэгдэнэ */
+export function watchBanners(callback) {
+  if (!FIREBASE_READY) { callback([]); return () => {}; }
+  const q = query(collection(getDb(), "banners"), where("active", "==", true));
+  return onSnapshot(q,
+    (snap) => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(docs.sort((a, b) => (a.order ?? 99) - (b.order ?? 99)));
+    },
+    (err) => { console.warn("Banner watch error:", err); callback([]); }
+  );
+}
+
+export async function fetchAllBanners() {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const snap = await getDocs(collection(getDb(), "banners"));
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return docs.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+}
+
+export async function saveBanner(id, data) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  if (id) {
+    await updateDoc(doc(getDb(), "banners", id), { ...data, updatedAt: new Date().toISOString() });
+  } else {
+    await addDoc(collection(getDb(), "banners"), { ...data, createdAt: new Date().toISOString() });
+  }
+}
+
+export async function deleteBanner(id) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  await deleteDoc(doc(getDb(), "banners", id));
+}
+
+// ─── Seller functions ────────────────────────────────────────────────────
+export async function registerSeller(uid, data) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  await setDoc(doc(getDb(), "sellers", uid), {
+    ...data, approved: false, createdAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function getSellerProfile(uid) {
+  if (!FIREBASE_READY) return null;
+  const snap = await getDoc(doc(getDb(), "sellers", uid));
+  return snap.exists() ? { uid: snap.id, ...snap.data() } : null;
+}
+
+export async function addSellerProduct(uid, sellerName, data) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const ref = await addDoc(collection(getDb(), "products"), {
+    ...data,
+    sellerId:   uid,
+    sellerName: sellerName,
+    status:     "pending",
+    createdAt:  new Date().toISOString(),
+    updatedAt:  new Date().toISOString(),
+  });
+  return ref.id;
+}
+
+export async function fetchSellerProducts(uid) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const snap = await getDocs(
+    query(collection(getDb(), "products"), where("sellerId", "==", uid))
+  );
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return docs.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+}
+
+export async function fetchPendingProducts() {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const snap = await getDocs(
+    query(collection(getDb(), "products"), where("status", "==", "pending"))
+  );
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return docs.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+}
+
+export async function setProductStatus(id, status, note = "") {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  await updateDoc(doc(getDb(), "products", id), {
+    status, adminNote: note, updatedAt: new Date().toISOString(),
+  });
 }
 
 /** Хэрэглэгч ban/unban хийх (admin) */

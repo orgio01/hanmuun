@@ -1,0 +1,6 @@
+node_modules/
+server/data/app.db
+server/data/app.db-shm
+server/data/app.db-wal
+.env
+.claude/
