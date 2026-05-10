@@ -6324,3 +6324,203 @@ body { overflow-x: hidden; }
 /* QuickNav banner-ийн дараа байх тул sticky хасна */
 .quickNav { position: static !important; }
 
+
+/* ══════════════════════════════════════════════════
+   My Page (Profile redesign)
+   ══════════════════════════════════════════════════ */
+
+/* User header */
+.myPage__user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.myPage__avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #ff6b6b);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.myPage__name  { font-size: 1.05rem; font-weight: 900; color: rgba(16,16,16,.88); }
+.myPage__email { font-size: .82rem; color: rgba(16,16,16,.50); font-weight: 650; margin-top: 3px; }
+
+/* Quick menu */
+.myPage__quickMenu {
+  display: grid;
+  gap: 0;
+  margin: 16px 0;
+  border: 1px solid var(--border);
+}
+.myPage__menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: rgba(16,16,16,.80);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: .9rem;
+  transition: background 130ms ease;
+}
+.myPage__menuItem:last-child { border-bottom: 0; }
+.myPage__menuItem:hover { background: rgba(16,16,16,.02); }
+.myPage__menuIcon { font-size: 1.2rem; width: 28px; text-align: center; }
+.myPage__menuLabel { flex: 1; }
+.myPage__menuArrow { color: rgba(16,16,16,.30); font-size: 1.1rem; }
+
+/* Sections */
+.myPage__section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.myPage__sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.myPage__sectionTitle {
+  margin: 0;
+  font-size: .96rem;
+  font-weight: 900;
+  color: rgba(16,16,16,.84);
+}
+.myPage__editToggle {
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 750;
+  cursor: pointer;
+  color: rgba(16,16,16,.60);
+  border-radius: 6px;
+  transition: background 130ms ease;
+}
+.myPage__editToggle:hover { background: rgba(0,0,0,.04); }
+
+/* Recently viewed grid */
+.myPage__recentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.myPage__recentItem {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-decoration: none;
+  color: inherit;
+}
+.myPage__recentItem img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: block;
+}
+.myPage__recentName {
+  font-size: .74rem;
+  font-weight: 700;
+  color: rgba(16,16,16,.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.myPage__recentPrice {
+  font-size: .78rem;
+  font-weight: 900;
+  color: var(--primary);
+}
+.myPage__empty {
+  font-size: .84rem;
+  color: rgba(16,16,16,.42);
+  font-weight: 650;
+  margin: 0;
+  padding: 8px 0;
+}
+
+/* Settings view */
+.myPage__settings { display: grid; gap: 0; }
+.myPage__settingRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(16,16,16,.05);
+  font-size: .88rem;
+}
+.myPage__settingRow:last-child { border-bottom: 0; }
+.myPage__settingLabel {
+  min-width: 72px;
+  font-weight: 750;
+  color: rgba(16,16,16,.48);
+}
+.myPage__settingVal { font-weight: 650; color: rgba(16,16,16,.78); }
+
+/* Settings edit form */
+.myPage__editForm { display: grid; gap: 10px; }
+.myPage__editField { display: grid; gap: 4px; }
+.myPage__editField label { font-size: .78rem; font-weight: 750; color: rgba(16,16,16,.50); }
+.myPage__editField input,
+.myPage__editField select {
+  height: 42px;
+  border: 1px solid rgba(16,16,16,.20);
+  padding: 0 10px;
+  font: inherit;
+  font-size: .88rem;
+  outline: none;
+  transition: border-color 140ms ease;
+  border-radius: 4px;
+}
+.myPage__editField input:focus,
+.myPage__editField select:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0,116,233,.08); }
+.myPage__editError {
+  padding: 8px 10px;
+  background: rgba(232,35,42,.07);
+  border: 1px solid rgba(232,35,42,.20);
+  color: #dc2626;
+  font-size: .82rem;
+  font-weight: 650;
+  border-radius: 4px;
+}
+.myPage__editActions { display: flex; gap: 8px; justify-content: flex-end; }
+.myPage__cancelBtn {
+  border: 1px solid var(--border); background: transparent;
+  padding: 9px 18px; font: inherit; font-size: .86rem; font-weight: 700;
+  cursor: pointer; border-radius: 6px; color: rgba(16,16,16,.60);
+}
+.myPage__saveBtn {
+  background: var(--c-blue); color: #fff; border: 0;
+  padding: 9px 22px; font: inherit; font-size: .86rem; font-weight: 800;
+  cursor: pointer; border-radius: 6px; transition: filter 130ms ease;
+}
+.myPage__saveBtn:hover { filter: brightness(1.08); }
+
+/* Logout */
+.myPage__logoutBtn {
+  width: 100%; height: 48px;
+  border: 1px solid rgba(232,35,42,.25);
+  background: rgba(232,35,42,.04);
+  color: var(--primary);
+  font: inherit; font-size: .9rem; font-weight: 800;
+  cursor: pointer; border-radius: 4px;
+  transition: background 130ms ease;
+}
+.myPage__logoutBtn:hover { background: rgba(232,35,42,.08); }
+
+/* Mobile */
+@media (max-width: 480px) {
+  .myPage__recentGrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .myPage__recentName { font-size: .68rem; }
+}

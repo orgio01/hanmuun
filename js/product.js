@@ -1,5 +1,5 @@
-import { apiJson }                              from "./api.js";
-import { getCartId, toggleWishlist, isInWishlist } from "./storage.js";
+import { apiJson }                                          from "./api.js";
+import { getCartId, toggleWishlist, isInWishlist, addRecentlyViewed } from "./storage.js";
 import { updateCartBadge, showToast, initSearchNav, initVoiceSearch } from "./common.js";
 import { initReviews } from "./reviews.js";
 import { FIREBASE_READY, getAuth_ } from "./firebase.js";
@@ -196,6 +196,7 @@ async function main() {
     show("[data-pdp]", true);
     render(p);
     loadRelated(p);
+    addRecentlyViewed(p); // recently viewed track
     const reviewsEl = document.querySelector("[data-reviews-container]");
     const user = FIREBASE_READY ? getAuth_()?.currentUser : null;
     initReviews(p.id, reviewsEl, user);

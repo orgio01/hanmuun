@@ -277,6 +277,86 @@ function initAddrBlock() {
   });
 }
 
+// ── My Page helpers ───────────────────────────────────────────────────────
+function renderMyPage(profile) {
+  const fmt = (v) => `$${Number(v).toFixed(2)}`;
+
+  // Avatar initial
+  const initial = (profile.name || profile.email || "?")[0].toUpperCase();
+  const avatarEl = qs("[data-profile-initial]");
+  if (avatarEl) avatarEl.textContent = initial;
+
+  // Info
+  const setText = (sel, v) => { const el = qs(sel); if (el) el.textContent = v || "—"; };
+  setText("[data-profile-name]",    profile.name);
+  setText("[data-profile-email]",   profile.email);
+  setText("[data-settings-name]",   profile.name);
+  setText("[data-settings-phone]",  profile.phone);
+  setText("[data-settings-email]",  profile.email);
+  setText("[data-settings-district]", profile.district || "Нэмэгдээгүй");
+  setText("[data-settings-addr]",   profile.addressLine || "Нэмэгдээгүй");
+
+  // Recently viewed
+  const recentGrid = qs("[data-recent-grid]");
+  if (recentGrid) {
+    const { getRecentlyViewed } = window._profileStorage || {};
+    import("./storage.js").then(({ getRecentlyViewed }) => {
+      const items = getRecentlyViewed();
+      if (!items.length) { recentGrid.innerHTML = `<p class="myPage__empty">Бараа үзээгүй байна</p>`; return; }
+      recentGrid.innerHTML = items.slice(0, 6).map(p => `
+        <a class="myPage__recentItem" href="/product/${encodeURIComponent(p.id)}">
+          <img src="${p.imageUrl || ''}" alt="${p.name}" onerror="this.style.display='none'"/>
+          <div class="myPage__recentName">${p.name}</div>
+          <div class="myPage__recentPrice">${fmt(p.price)}</div>
+        </a>`).join("");
+    });
+  }
+}
+
+function initSettingsEdit(profile) {
+  const toggleBtn  = qs("[data-toggle-settings]");
+  const viewEl     = qs("[data-settings-view]");
+  const editEl     = qs("[data-settings-edit]");
+  const cancelBtn  = qs("[data-cancel-settings]");
+  const errEl      = qs("[data-settings-error]");
+
+  toggleBtn?.addEventListener("click", () => {
+    viewEl.hidden = true; editEl.hidden = false;
+    toggleBtn.textContent = "";
+    const cur = getProfile();
+    const sv = (id, v) => { const el = qsId(id); if (el) el.value = v || ""; };
+    sv("setPName",     cur?.name);
+    sv("setPPhone",    cur?.phone);
+    sv("setPDistrict", cur?.district);
+    sv("setPAddr",     cur?.addressLine);
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    viewEl.hidden = false; editEl.hidden = true;
+    if (toggleBtn) toggleBtn.textContent = "Засах ✏️";
+    if (errEl) errEl.hidden = true;
+  });
+
+  editEl?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name    = qsId("setPName")?.value.trim();
+    const phone   = qsId("setPPhone")?.value.trim();
+    const district = qsId("setPDistrict")?.value;
+    const addr    = qsId("setPAddr")?.value.trim();
+    if (errEl) errEl.hidden = true;
+    if (!name)  { if (errEl) { errEl.textContent = "Нэрээ оруулна уу."; errEl.hidden = false; } return; }
+
+    const cur = getProfile();
+    setProfile({ ...cur, name, phone, district: district || cur?.district || "", addressLine: addr || cur?.addressLine || "" });
+
+    // Refresh display
+    renderMyPage(getProfile());
+    viewEl.hidden = false; editEl.hidden = true;
+    if (toggleBtn) toggleBtn.textContent = "Засах ✏️";
+    showToast("Мэдээлэл хадгалагдлаа ✓", "ok");
+  });
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 function main() {
   const hasProfile = qs("[data-has-profile]");
@@ -295,19 +375,21 @@ function main() {
     if (regForm)    regForm.hidden    = true;
   } else if (mode === "signup") {
     if (loginForm) loginForm.hidden = true;
-    if (existing && hasProfile && preview) {
+    if (existing && hasProfile) {
       hasProfile.hidden = false;
-      preview.textContent = previewText(existing);
+      renderMyPage(existing);
+      initSettingsEdit(existing);
     } else if (hasProfile) {
       hasProfile.hidden = true;
     }
-    if (regForm) regForm.hidden = false;
+    if (regForm) regForm.hidden = !existing;
   } else {
     if (loginForm) loginForm.hidden = true;
-    if (existing && hasProfile && preview && regForm) {
+    if (existing && hasProfile) {
       hasProfile.hidden = false;
-      preview.textContent = previewText(existing);
-      regForm.hidden = true;
+      renderMyPage(existing);
+      initSettingsEdit(existing);
+      if (regForm) regForm.hidden = true;
     } else if (regForm) {
       regForm.hidden = false;
     }

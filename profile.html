@@ -220,60 +220,119 @@
           <div class="cLogin__foot">© 2026 HANMUN. Бүх эрх хамгаалагдсан.</div>
         </form>
 
-        <div class="notice" data-has-profile hidden>
-          <div class="notice__title">Миний мэдээлэл</div>
-          <div class="notice__hint" data-profile-preview></div>
+        <!-- ══ Нэвтэрсэн хэрэглэгчийн хуудас ══ -->
+        <div data-has-profile hidden>
 
-          <!-- Хүргэлтийн хаяг — нэвтэрсний дараа нэмнэ -->
-          <div class="profileAddrBlock" data-addr-block>
-            <!-- Хаяг байхгүй үед -->
-            <div data-no-addr>
-              <div class="profileAddrBlock__empty">
-                📍 Хүргэлтийн хаяг нэмэгдээгүй байна
+          <!-- Хэрэглэгчийн мэдээлэл -->
+          <div class="myPage__user">
+            <div class="myPage__avatar" data-profile-initial>?</div>
+            <div class="myPage__userInfo">
+              <div class="myPage__name" data-profile-name>—</div>
+              <div class="myPage__email" data-profile-email>—</div>
+            </div>
+          </div>
+
+          <!-- Хурдан цэс -->
+          <div class="myPage__quickMenu">
+            <a class="myPage__menuItem" href="/my-orders">
+              <span class="myPage__menuIcon">📦</span>
+              <span class="myPage__menuLabel">Захиалгууд</span>
+              <span class="myPage__menuArrow">›</span>
+            </a>
+            <a class="myPage__menuItem" href="/wishlist">
+              <span class="myPage__menuIcon">❤️</span>
+              <span class="myPage__menuLabel">Дуртай бараа</span>
+              <span class="myPage__menuArrow">›</span>
+            </a>
+            <a class="myPage__menuItem" href="/cart.html">
+              <span class="myPage__menuIcon">🛒</span>
+              <span class="myPage__menuLabel">Сагс</span>
+              <span class="myPage__menuArrow">›</span>
+            </a>
+          </div>
+
+          <!-- Сүүлд үзсэн бараа -->
+          <div class="myPage__section">
+            <div class="myPage__sectionHead">
+              <h2 class="myPage__sectionTitle">🕐 Сүүлд үзсэн</h2>
+            </div>
+            <div class="myPage__recentGrid" data-recent-grid>
+              <p class="myPage__empty">Бараа үзээгүй байна</p>
+            </div>
+          </div>
+
+          <!-- Профайл тохиргоо -->
+          <div class="myPage__section">
+            <div class="myPage__sectionHead">
+              <h2 class="myPage__sectionTitle">⚙️ Профайл тохиргоо</h2>
+              <button class="myPage__editToggle" type="button" data-toggle-settings>Засах ✏️</button>
+            </div>
+
+            <!-- View mode -->
+            <div class="myPage__settings" data-settings-view>
+              <div class="myPage__settingRow">
+                <span class="myPage__settingLabel">Нэр</span>
+                <span class="myPage__settingVal" data-settings-name>—</span>
               </div>
-              <form class="profileAddrBlock__form" data-addr-save-form>
-                <div class="cFieldRow" style="margin-top:8px">
-                  <div class="cFieldRow__icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                  </div>
-                  <select class="cFieldRow__input" id="addrDistrict">
-                    <option value="">Дүүрэг сонгох…</option>
-                    <option>Sukhbaatar</option>
-                    <option>Chingeltei</option>
-                    <option>Bayangol</option>
-                    <option>Khan-Uul</option>
-                    <option>Bayanzurkh</option>
-                    <option>Songinokhairkhan</option>
-                  </select>
-                </div>
-                <div class="cFieldRow">
-                  <div class="cFieldRow__icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 22V12h6v10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                  </div>
-                  <input class="cFieldRow__input" id="addrLine" type="text" autocomplete="street-address" placeholder="Гудамж, байр, орц, тоот" />
-                  <button class="cFieldRow__iconBtn" type="button" data-clear-field="addrLine" aria-label="Арилгах">
-                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  </button>
-                </div>
-                <div class="cLoginError" data-addr-error hidden></div>
-                <button class="cBtnPrimary" type="submit" style="margin-top:8px;height:44px;font-size:.88rem">
-                  📍 Хаяг хадгалах
-                </button>
-              </form>
+              <div class="myPage__settingRow">
+                <span class="myPage__settingLabel">Утас</span>
+                <span class="myPage__settingVal" data-settings-phone>—</span>
+              </div>
+              <div class="myPage__settingRow">
+                <span class="myPage__settingLabel">И-мэйл</span>
+                <span class="myPage__settingVal" data-settings-email>—</span>
+              </div>
+              <div class="myPage__settingRow">
+                <span class="myPage__settingLabel">Дүүрэг</span>
+                <span class="myPage__settingVal" data-settings-district>Нэмэгдээгүй</span>
+              </div>
+              <div class="myPage__settingRow">
+                <span class="myPage__settingLabel">Хаяг</span>
+                <span class="myPage__settingVal" data-settings-addr>Нэмэгдээгүй</span>
+              </div>
             </div>
 
-            <!-- Хаяг байгаа үед -->
-            <div data-has-addr hidden>
-              <div class="profileAddrBlock__current" data-addr-display></div>
-              <button class="profileAddrBlock__editBtn" type="button" data-edit-addr>Хаяг засах ✏️</button>
-            </div>
+            <!-- Edit mode -->
+            <form class="myPage__editForm" data-settings-edit hidden>
+              <div class="myPage__editField">
+                <label>Нэр</label>
+                <input id="setPName" type="text" placeholder="Бүтэн нэр" autocomplete="name"/>
+              </div>
+              <div class="myPage__editField">
+                <label>Утас</label>
+                <input id="setPPhone" type="tel" inputmode="numeric" placeholder="8 оронтой"/>
+              </div>
+              <div class="myPage__editField">
+                <label>Дүүрэг</label>
+                <select id="setPDistrict">
+                  <option value="">Сонгох…</option>
+                  <option>Sukhbaatar</option>
+                  <option>Chingeltei</option>
+                  <option>Bayangol</option>
+                  <option>Khan-Uul</option>
+                  <option>Bayanzurkh</option>
+                  <option>Songinokhairkhan</option>
+                </select>
+              </div>
+              <div class="myPage__editField">
+                <label>Хаяг</label>
+                <input id="setPAddr" type="text" placeholder="Гудамж, байр, тоот" autocomplete="street-address"/>
+              </div>
+              <div class="myPage__editError" data-settings-error hidden></div>
+              <div class="myPage__editActions">
+                <button type="button" class="myPage__cancelBtn" data-cancel-settings>Болих</button>
+                <button type="submit" class="myPage__saveBtn">Хадгалах</button>
+              </div>
+            </form>
           </div>
 
-          <div class="panel__actions" style="margin-top:12px">
-            <a class="btn btn--primary" href="./checkout.html">Захиалах</a>
-            <button class="btn btn--ghost" type="button" data-edit>Мэдээлэл засах</button>
-            <button class="btn btn--ghost" type="button" data-clear>Гарах</button>
+          <!-- Гарах -->
+          <div class="myPage__section">
+            <button class="myPage__logoutBtn" type="button" data-clear>
+              🚪 Гарах
+            </button>
           </div>
+
         </div>
 
         <form class="cRegForm" data-register-form hidden>

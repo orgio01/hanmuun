@@ -85,6 +85,24 @@ export function getRecentSearches() {
   catch { return []; }
 }
 
+// ── Recently viewed ──────────────────────────────────────────────────────
+const RECENT_KEY = "mvp_recently_viewed";
+
+export function addRecentlyViewed(product) {
+  if (!product?.id) return;
+  try {
+    let list = getRecentlyViewed();
+    list = list.filter(p => p.id !== product.id);
+    list.unshift({ id: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl, category: product.category });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 12)));
+  } catch {}
+}
+
+export function getRecentlyViewed() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); }
+  catch { return []; }
+}
+
 /** HTML-д оруулахаас өмнө XSS-ийг сэргийлэх */
 export function escHtml(str) {
   return String(str ?? "")
