@@ -6705,3 +6705,22 @@ body { overflow-x: hidden; }
 }
 .myPage__logoutRow:hover { color: var(--primary); }
 
+
+/* ── Banner + QuickNav wrapper — order switching ── */
+.bannerNavWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop (>768px): quickNav ABOVE banner */
+@media (min-width: 769px) {
+  .bannerNavWrap .quickNav    { order: -1; }
+  .bannerNavWrap .bannerFull  { order:  0; }
+}
+
+/* Mobile (≤768px): banner ABOVE quickNav (default HTML order = bannerFull first) */
+@media (max-width: 768px) {
+  .bannerNavWrap .bannerFull  { order: -1; }
+  .bannerNavWrap .quickNav    { order:  0; }
+}
+
