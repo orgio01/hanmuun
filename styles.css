@@ -6797,3 +6797,15 @@ body { overflow-x: hidden; }
   .quickNav__label { font-size: .66rem !important; }
 }
 
+
+/* PromoStrip — search-тэй ижил өргөн */
+.promoStrip {
+  max-width: 780px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  border-left: 1px solid rgba(232,35,42,.12) !important;
+  border-right: 1px solid rgba(232,35,42,.12) !important;
+}
+
