@@ -48,15 +48,23 @@ export function initVoiceSearch(input, btn) {
   if (!SR) { btn.hidden = true; return; }
 
   const rec = new SR();
+  // mn-MN дэмжихгүй бол en-US fallback
   rec.lang = "mn-MN";
   rec.interimResults = false;
-  rec.maxAlternatives = 1;
+  rec.maxAlternatives = 3;
+  rec.continuous = false;
   let active = false;
 
-  btn.addEventListener("click", (e) => {
+  btn.addEventListener("click", async (e) => {
     e.preventDefault();
     if (active) { rec.stop(); return; }
-    try { rec.start(); } catch { /* already running */ }
+    // Mobile Safari: mic permission-г урьдчилж авах
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {});
+      }
+      rec.start();
+    } catch { /* already running */ }
   });
 
   rec.onstart = () => {
