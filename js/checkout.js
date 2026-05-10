@@ -398,6 +398,11 @@ async function main() {
 
   // Load cart items from localStorage
   const rawCart = getLocalCart();
+  if (!rawCart.length) {
+    setCoError("Сагс хоосон байна. Эхлээд бараа нэмнэ үү.");
+    const btn = qs("[data-co-submit]");
+    if (btn) btn.disabled = true;
+  }
   _items    = rawCart.map(i => ({ product: { id: i.productId, name: i.name, price: i.price, imageUrl: i.imageUrl, sellerId: i.sellerId, sellerName: i.sellerName }, qty: i.qty }));
   _subtotal = _items.reduce((s, i) => s + i.product.price * i.qty, 0);
   renderItems(_items);

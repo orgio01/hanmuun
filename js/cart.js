@@ -1,179 +1,123 @@
-import { apiJson }     from "./api.js";
-import { getCartId }   from "./storage.js";
+import { getLocalCart, updateLocalCartQty, removeFromLocalCart } from "./storage.js";
 import { updateCartBadge, showToast, initSearchNav } from "./common.js";
 
-const fmt = (v) => `$${Number(v).toFixed(2)}`;
-const clamp = (n, lo, hi) => (Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo);
+const fmt   = (v) => `$${Number(v).toFixed(2)}`;
+const qs    = (sel) => document.querySelector(sel);
 
-// ── API calls (unchanged) ─────────────────────────────────────────────────
-async function apiSetQty(cartItemId, qty) {
-  await apiJson(`/api/cart/items/${cartItemId}`, {
-    method: "PATCH",
-    body: JSON.stringify({ cartId: getCartId(), qty }),
-  });
-}
-async function apiRemove(cartItemId) {
-  await apiJson(`/api/cart/items/${cartItemId}?cartId=${encodeURIComponent(getCartId())}`, {
-    method: "DELETE",
-  });
-}
-
-// ── Totals update ─────────────────────────────────────────────────────────
-function updateTotals(items) {
-  const sub = items.reduce((s, i) => s + i.product.price * i.qty, 0);
-  const subEl   = document.querySelector("[data-subtotal]");
-  const totalEl = document.querySelector("[data-total]");
-  if (subEl)   subEl.textContent   = fmt(sub);
-  if (totalEl) totalEl.textContent = fmt(sub);          // delivery TBD at checkout
-
-  const countEl = document.querySelector("[data-cart-count]");
-  if (countEl) {
-    const n = items.reduce((s, i) => s + i.qty, 0);
-    countEl.textContent = n ? `${n} бараа` : "";
-  }
-
-  const checkoutBtn = document.querySelector("[data-checkout-btn]");
-  if (checkoutBtn) checkoutBtn.style.pointerEvents = items.length ? "" : "none";
-}
-
-// ── Build one cart item card ──────────────────────────────────────────────
-function buildItem(item) {
-  const card = document.createElement("div");
-  card.className = "cartItem";
-  card.dataset.cartItemId = item.id;
-
-  card.innerHTML = `
-    <a class="cartItem__imgLink" href="/product/${encodeURIComponent(item.product.id)}" tabindex="-1" aria-hidden="true">
-      <img class="cartItem__img" src="${item.product.imageUrl}" alt="${item.product.name}" loading="lazy" />
-    </a>
-
-    <div class="cartItem__body">
-      <div class="cartItem__meta">
-        <a class="cartItem__name" href="/product/${encodeURIComponent(item.product.id)}">${item.product.name}</a>
-        ${item.product.category ? `<span class="cartItem__cat">${item.product.category}</span>` : ""}
-        <div class="cartItem__price">${fmt(item.product.price)}</div>
-      </div>
-
-      <div class="cartItem__controls">
-        <div class="cartItem__qtyWrap">
-          <button class="cartItem__qtyBtn" type="button" data-qty-dec aria-label="Бага болгох">−</button>
-          <input class="cartItem__qtyInput" type="number" inputmode="numeric"
-            value="${item.qty}" min="1" max="99" aria-label="Тоо ширхэг" data-qty-input />
-          <button class="cartItem__qtyBtn" type="button" data-qty-inc aria-label="Их болгох">+</button>
-        </div>
-        <button class="cartItem__remove" type="button" data-remove aria-label="Устгах">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  `.trim();
-
-  return card;
-}
-
-// ── Show empty state ──────────────────────────────────────────────────────
-function showEmpty() {
-  const list  = document.querySelector("[data-cart-list]");
-  const empty = document.querySelector("[data-cart-empty]");
-  if (list)  list.replaceChildren();
-  if (empty) empty.hidden = false;
-  updateTotals([]);
-
-  const checkoutBtn = document.querySelector("[data-checkout-btn]");
-  if (checkoutBtn) checkoutBtn.style.opacity = "0.45";
-}
-
-// ── Load & render ─────────────────────────────────────────────────────────
-let _items = [];   // in-memory cache for optimistic updates
-
-async function load() {
-  const list  = document.querySelector("[data-cart-list]");
-  const empty = document.querySelector("[data-cart-empty]");
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const list  = qs("[data-cart-list]");
+  const empty = qs("[data-cart-empty]");
   if (!list) return;
 
-  const data = await apiJson(`/api/cart?cartId=${encodeURIComponent(getCartId())}`);
-  _items = data.items || [];
+  const items = getLocalCart();
 
-  if (!_items.length) {
-    showEmpty();
+  if (!items.length) {
+    list.replaceChildren();
+    if (empty) empty.hidden = false;
+    updateTotals([]);
+    const btn = qs("[data-checkout-btn]");
+    if (btn) { btn.style.opacity = "0.45"; btn.style.pointerEvents = "none"; }
     return;
   }
 
   if (empty) empty.hidden = true;
-  list.replaceChildren(..._items.map(buildItem));
-  updateTotals(_items);
+  const btn = qs("[data-checkout-btn]");
+  if (btn) { btn.style.opacity = ""; btn.style.pointerEvents = ""; }
+
+  list.replaceChildren(...items.map(item => {
+    const card = document.createElement("div");
+    card.className = "cartItem";
+    card.dataset.productId = item.productId;
+    card.innerHTML = `
+      <a class="cartItem__imgLink" href="/product/${encodeURIComponent(item.productId)}" tabindex="-1" aria-hidden="true">
+        <img class="cartItem__img" src="${item.imageUrl||''}" alt="${item.name}" loading="lazy"
+          onerror="this.style.opacity='0.3'"/>
+      </a>
+      <div class="cartItem__body">
+        <div class="cartItem__meta">
+          <a class="cartItem__name" href="/product/${encodeURIComponent(item.productId)}">${item.name}</a>
+          <div class="cartItem__price">${fmt(item.price)}</div>
+          ${item.sellerName ? `<div style="font-size:.72rem;color:#64748b">🏪 ${item.sellerName}</div>` : ""}
+        </div>
+        <div class="cartItem__controls">
+          <div class="cartItem__qtyWrap">
+            <button class="cartItem__qtyBtn" type="button" data-qty-dec aria-label="Бага болгох">−</button>
+            <input class="cartItem__qtyInput" type="number" inputmode="numeric"
+              value="${item.qty}" min="1" max="99" data-qty-input />
+            <button class="cartItem__qtyBtn" type="button" data-qty-inc aria-label="Их болгох">+</button>
+          </div>
+          <div style="font-weight:800;font-size:.92rem;min-width:60px;text-align:right">${fmt(item.price * item.qty)}</div>
+          <button class="cartItem__remove" type="button" data-remove aria-label="Устгах">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>`;
+    return card;
+  }));
+
+  updateTotals(items);
+  updateCartBadge();
+}
+
+function updateTotals(items) {
+  const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const subEl = qs("[data-subtotal]");
+  const totEl = qs("[data-total]");
+  if (subEl) subEl.textContent = fmt(sub);
+  if (totEl) totEl.textContent = fmt(sub);
+  const countEl = qs("[data-cart-count]");
+  if (countEl) {
+    const n = items.reduce((s, i) => s + i.qty, 0);
+    countEl.textContent = n ? `${n} бараа` : "";
+  }
 }
 
 // ── Event delegation ──────────────────────────────────────────────────────
-function wire() {
-  document.addEventListener("click", async (e) => {
-    const card = e.target.closest(".cartItem");
-    if (!card) return;
-    const id = card.dataset.cartItemId;
-    if (!id) return;
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".cartItem");
+  if (!card) return;
+  const pid = card.dataset.productId;
+  if (!pid) return;
 
-    // Remove
-    if (e.target.closest("[data-remove]")) {
-      card.style.opacity = "0.4";
-      card.style.pointerEvents = "none";
-      try {
-        await apiRemove(id);
-        await load();
-        updateCartBadge();
-        showToast("Сагснаас хаслаа");
-      } catch {
-        card.style.opacity = "";
-        card.style.pointerEvents = "";
-        showToast("Устгаж чадсангүй", "warn");
-      }
-      return;
-    }
+  if (e.target.closest("[data-remove]")) {
+    removeFromLocalCart(pid);
+    showToast("Сагснаас хаслаа");
+    render();
+    return;
+  }
 
-    const input   = card.querySelector("[data-qty-input]");
-    const current = clamp(Number(input?.value), 1, 99);
+  const input = card.querySelector("[data-qty-input]");
+  const cur   = Math.max(1, Math.min(99, Number(input?.value) || 1));
 
-    if (e.target.closest("[data-qty-inc]")) {
-      const next = Math.min(99, current + 1);
-      if (input) input.value = next;
-      try {
-        await apiSetQty(id, next);
-        // update in-memory & totals without full re-render
-        const item = _items.find((x) => String(x.id) === String(id));
-        if (item) { item.qty = next; updateTotals(_items); updateCartBadge(); }
-      } catch { await load(); }
-    }
+  if (e.target.closest("[data-qty-inc]")) {
+    const next = Math.min(99, cur + 1);
+    if (input) input.value = next;
+    updateLocalCartQty(pid, next);
+    render();
+  }
+  if (e.target.closest("[data-qty-dec]")) {
+    const next = Math.max(1, cur - 1);
+    if (input) input.value = next;
+    updateLocalCartQty(pid, next);
+    render();
+  }
+});
 
-    if (e.target.closest("[data-qty-dec]")) {
-      const next = Math.max(1, current - 1);
-      if (input) input.value = next;
-      try {
-        await apiSetQty(id, next);
-        const item = _items.find((x) => String(x.id) === String(id));
-        if (item) { item.qty = next; updateTotals(_items); updateCartBadge(); }
-      } catch { await load(); }
-    }
-  });
-
-  // Direct input change
-  document.addEventListener("change", async (e) => {
-    const input = e.target.closest("[data-qty-input]");
-    if (!input) return;
-    const card = input.closest(".cartItem");
-    const id   = card?.dataset?.cartItemId;
-    if (!id) return;
-    const qty = clamp(Number(input.value), 1, 99);
-    input.value = qty;
-    try {
-      await apiSetQty(id, qty);
-      const item = _items.find((x) => String(x.id) === String(id));
-      if (item) { item.qty = qty; updateTotals(_items); updateCartBadge(); }
-    } catch { await load(); }
-  });
-}
+document.addEventListener("change", (e) => {
+  const input = e.target.closest("[data-qty-input]");
+  if (!input) return;
+  const card = input.closest(".cartItem");
+  const pid  = card?.dataset?.productId;
+  if (!pid) return;
+  const qty = Math.max(1, Math.min(99, Number(input.value) || 1));
+  input.value = qty;
+  updateLocalCartQty(pid, qty);
+  render();
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────
-wire();
-load().then(() => updateCartBadge());
+render();
 initSearchNav();
