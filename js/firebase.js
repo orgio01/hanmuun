@@ -374,6 +374,28 @@ export async function fetchSellerOrdersFirebase(sellerId) {
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
+/** Seller-ийн захиалгыг real-time сонсох */
+export function watchSellerOrders(sellerId, callback) {
+  if (!FIREBASE_READY) return () => {};
+  const q = query(collection(getDb(), "orders"), where("sellerIds", "array-contains", sellerId));
+  return onSnapshot(q, snap => {
+    const orders = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    callback(orders, snap.docChanges());
+  });
+}
+
+/** Admin-ий бүх захиалгыг real-time сонсох */
+export function watchAllOrders(callback) {
+  if (!FIREBASE_READY) return () => {};
+  const q = query(collection(getDb(), "orders"), orderBy("createdAt", "desc"));
+  return onSnapshot(q, snap => {
+    const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(orders, snap.docChanges());
+  });
+}
+
 export async function fetchOrderFirebase(orderNumber) {
   if (!FIREBASE_READY) return null;
   const snap = await getDocs(query(collection(getDb(), "orders"), where("orderNumber", "==", orderNumber)));

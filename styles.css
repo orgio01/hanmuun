@@ -6985,3 +6985,9 @@ body { overflow-x: hidden; }
 @media (max-width: 400px) {
   .catPicker { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Seller/Admin order notification toast */
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(40px); }
+  to   { opacity:1; transform:translateX(0); }
+}

@@ -1,6 +1,7 @@
 import {
   FIREBASE_READY, getAuth_, getSellerProfile,
   addSellerProduct, fetchSellerProducts, fetchSellerOrdersFirebase,
+  watchSellerOrders,
 } from "./firebase.js";
 
 // ── Зураг compress (Canvas API — Storage хэрэггүй) ───────────────────────
@@ -350,7 +351,56 @@ function initAuth() {
 
     navigateTo("overview");
     unsubscribe();
+
+    // Real-time захиалга сонсогч
+    let _knownOrderIds = null;
+    watchSellerOrders(user.uid, (orders, changes) => {
+      // Badge шинэчлэх
+      const countEl = qs("[data-orders-count]");
+      if (countEl) countEl.textContent = orders.length;
+
+      // Эхний ачааллыг алгасаж зөвхөн шинэ захиалга ирэхэд мэдэгдэнэ
+      if (_knownOrderIds === null) {
+        _knownOrderIds = new Set(orders.map(o => o.id));
+        return;
+      }
+      const newOrders = changes.filter(c => c.type === "added" && !_knownOrderIds.has(c.doc.id));
+      newOrders.forEach(c => {
+        _knownOrderIds.add(c.doc.id);
+        const o = c.doc.data();
+        showNotification(`🛒 Шинэ захиалга! ${o.orderNumber || ""}`, `${o.customerName || "Хэрэглэгч"} захиалга хийлээ`);
+      });
+
+      // Захиалга хуудсанд байвал жагсаалт шинэчлэх
+      if (!qs("[data-seller-page='orders']")?.hidden) loadSellerOrders();
+    });
   });
+}
+
+function showNotification(title, body) {
+  // In-app toast
+  const toast = document.createElement("div");
+  toast.style.cssText = `
+    position:fixed;top:20px;right:20px;z-index:9999;
+    background:#0f172a;color:#fff;
+    padding:14px 18px;border-radius:10px;
+    box-shadow:0 8px 32px rgba(0,0,0,.28);
+    font-size:.88rem;font-weight:700;
+    display:flex;flex-direction:column;gap:4px;
+    max-width:300px;cursor:pointer;
+    animation:slideIn .3s ease;
+  `;
+  toast.innerHTML = `<span style="font-size:1rem">${title}</span><span style="font-weight:500;opacity:.75">${body}</span>`;
+  toast.onclick = () => { navigateTo("orders"); toast.remove(); };
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 6000);
+
+  // Browser notification (хэрэглэгч зөвшөөрсөн бол)
+  if (Notification.permission === "granted") {
+    new Notification(title, { body, icon: "/favicon.ico" });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
 }
 
 initAuth();

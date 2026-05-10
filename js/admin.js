@@ -4,6 +4,7 @@ import {
   fetchPendingProducts, setProductStatus,
   fetchAllBanners, saveBanner, deleteBanner,
   fetchAllSellers, approveSellerAccount,
+  watchAllOrders,
 } from "./firebase.js";
 import { apiJson } from "./api.js";
 
@@ -91,6 +92,31 @@ function showApp(user, profile) {
   if (av) av.textContent = (profile?.name || "A")[0].toUpperCase();
   navigateTo("dashboard");
   loadDashboard();
+  startOrderWatcher();
+}
+
+let _adminKnownOrderIds = null;
+function startOrderWatcher() {
+  if (!FIREBASE_READY) return;
+  watchAllOrders((orders, changes) => {
+    // Badge шинэчлэх
+    const countEl = qs("[data-orders-count]");
+    if (countEl) countEl.textContent = orders.length;
+
+    if (_adminKnownOrderIds === null) {
+      _adminKnownOrderIds = new Set(orders.map(o => o.id));
+      return;
+    }
+    const newOnes = changes.filter(c => c.type === "added" && !_adminKnownOrderIds.has(c.doc.id));
+    newOnes.forEach(c => {
+      _adminKnownOrderIds.add(c.doc.id);
+      const o = c.doc.data();
+      showAdminToast(`🛒 Шинэ захиалга: ${o.orderNumber || ""} — ${o.customerName || "Хэрэглэгч"}`, "ok");
+    });
+
+    // Захиалгын хуудсанд байвал шинэчлэх
+    if (!qs("[data-section='orders']")?.hidden) loadOrders();
+  });
 }
 
 qs("[data-gate-login]")?.addEventListener("click", async () => {
