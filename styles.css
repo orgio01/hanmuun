@@ -6724,3 +6724,38 @@ body { overflow-x: hidden; }
   .bannerNavWrap .quickNav    { order:  0; }
 }
 
+
+/* QuickNav: emoji баруун талд текст (row layout) */
+.quickNav__item {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 10px 12px !important;
+  min-width: auto !important;
+  white-space: nowrap !important;
+}
+.quickNav__icon  { font-size: 1.3rem !important; flex-shrink: 0; }
+.quickNav__label { font-size: .72rem !important; font-weight: 700 !important; }
+
+@media (max-width: 768px) {
+  .quickNav {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    grid-template-columns: unset !important;
+    grid-template-rows: unset !important;
+    padding: 0 12px !important;
+    gap: 0 !important;
+  }
+  .quickNav__item {
+    flex-direction: row !important;
+    padding: 10px 12px !important;
+    min-width: auto !important;
+    border-right: 1px solid rgba(16,16,16,.06) !important;
+    gap: 5px !important;
+  }
+  .quickNav__item:last-child { border-right: 0 !important; }
+  .quickNav__icon  { font-size: 1.2rem !important; }
+  .quickNav__label { font-size: .7rem !important; }
+}
+
