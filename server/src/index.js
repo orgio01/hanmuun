@@ -194,8 +194,9 @@ app.use("/api/", (req, res) => notFound(res));
 app.listen(PORT, () => {
   console.log(`HANMUN server running on port ${PORT}`);
   // Keep Render free tier awake — ping self every 14 min
-  const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-  setInterval(() => {
-    fetch(`${host}/`).catch(() => {});
-  }, 14 * 60 * 1000);
+  import("node:http").then(({ default: http }) => {
+    setInterval(() => {
+      try { http.get(`http://localhost:${PORT}/`); } catch {}
+    }, 14 * 60 * 1000);
+  });
 });
