@@ -103,6 +103,51 @@ export function getRecentlyViewed() {
   catch { return []; }
 }
 
+// ── Local Cart (localStorage — server хэрэггүй) ──────────────────────────
+const CART_KEY = "mvp_cart_v2";
+
+export function getLocalCart() {
+  try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
+  catch { return []; }
+}
+
+export function addToLocalCart(product, qty = 1) {
+  const cart = getLocalCart();
+  const idx  = cart.findIndex(i => i.productId === product.id);
+  if (idx >= 0) {
+    cart[idx].qty = Math.min(99, cart[idx].qty + qty);
+  } else {
+    cart.push({
+      productId:  product.id,
+      name:       product.name,
+      price:      product.price,
+      imageUrl:   product.imageUrl || "",
+      sellerId:   product.sellerId   || "",
+      sellerName: product.sellerName || "",
+      qty,
+    });
+  }
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+export function updateLocalCartQty(productId, qty) {
+  const cart = getLocalCart().map(i => i.productId === productId ? { ...i, qty } : i).filter(i => i.qty > 0);
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+export function removeFromLocalCart(productId) {
+  const cart = getLocalCart().filter(i => i.productId !== productId);
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+export function clearLocalCart() {
+  localStorage.removeItem(CART_KEY);
+}
+
+export function localCartCount() {
+  return getLocalCart().reduce((s, i) => s + i.qty, 0);
+}
+
 /** HTML-д оруулахаас өмнө XSS-ийг сэргийлэх */
 export function escHtml(str) {
   return String(str ?? "")

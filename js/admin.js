@@ -307,16 +307,28 @@ async function loadOrders() {
   const tbody = qs("[data-orders-tbody]");
   tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty">Уншиж байна…</td></tr>`;
   try {
-    const { orders } = await adminApi("/api/admin/orders");
-    _allOrders = orders;
-    _filteredOrders = orders;
-    renderOrdersTable(orders);
-    setText("[data-stat-orders]",  orders.length);
-    setText("[data-orders-count]", orders.length);
-  } catch {
-    tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty adminTable__empty--error">
-      Сервер offline. <code>npm start</code> ажиллуулна уу.
-    </td></tr>`;
+    const { fetchAllOrdersFirebase } = await import("./firebase.js");
+    const orders = await fetchAllOrdersFirebase();
+    // Map Firebase order shape to admin table shape
+    const mapped = orders.map(o => ({
+      id: o.id,
+      orderNumber:   o.orderNumber,
+      status:        o.status || "pending",
+      paymentStatus: o.paymentStatus || "unpaid",
+      paymentMethod: o.paymentMethod || "—",
+      customer: { name: o.customerName, phone: o.phone, addressLine: o.addressLine, district: o.district },
+      totals: { subtotal: o.subtotal || 0, deliveryFee: o.deliveryFee || 0, total: o.total || 0 },
+      shipment: { status: o.status, eta: o.eta },
+      items: o.items || [],
+      createdAt: o.createdAt,
+    }));
+    _allOrders = mapped;
+    _filteredOrders = mapped;
+    renderOrdersTable(mapped);
+    setText("[data-stat-orders]",  mapped.length);
+    setText("[data-orders-count]", mapped.length);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty adminTable__empty--error">Алдаа: ${e.message}</td></tr>`;
   }
 }
 
@@ -389,12 +401,9 @@ document.addEventListener("click", async (e) => {
   btn.textContent = "Шинэчилж байна…";
 
   try {
-    await adminApi(`/api/admin/orders/${encodeURIComponent(orderNum)}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: newStatus }),
-    });
-    // Update local cache
+    const { updateFirebaseOrderStatus } = await import("./firebase.js");
     const o = _allOrders.find(x => x.orderNumber === orderNum);
+    if (o?.id) await updateFirebaseOrderStatus(o.id, newStatus);
     if (o) o.status = newStatus;
     filterOrders();
     showAdminToast(`✓ ${label} болов`, "ok");

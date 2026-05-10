@@ -1,6 +1,6 @@
 import {
   FIREBASE_READY, getAuth_, getSellerProfile,
-  addSellerProduct, fetchSellerProducts,
+  addSellerProduct, fetchSellerProducts, fetchSellerOrdersFirebase,
 } from "./firebase.js";
 
 // ── Зураг compress (Canvas API — Storage хэрэггүй) ───────────────────────
@@ -53,6 +53,7 @@ function navigateTo(page) {
   if (addBtn) addBtn.hidden = page !== "products";
   if (page === "products") loadProducts();
   if (page === "overview") loadOverview();
+  if (page === "orders")   loadSellerOrders();
 }
 
 document.querySelectorAll("[data-nav]").forEach(el => {
@@ -115,6 +116,39 @@ function updateStats(products) {
   setText("[data-stat-approved]", products.filter(p => p.status === "approved").length);
   setText("[data-stat-rejected]", products.filter(p => p.status === "rejected").length);
   setText("[data-products-count]", products.length);
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────
+async function loadSellerOrders() {
+  const tbody = qs("[data-orders-tbody]");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="6" class="sellerTable__empty">Уншиж байна…</td></tr>`;
+  try {
+    const orders = await fetchSellerOrdersFirebase(_currentUid);
+    qs("[data-orders-count]") && (qs("[data-orders-count]").textContent = orders.length);
+    if (!orders.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="sellerTable__empty">Захиалга байхгүй байна</td></tr>`;
+      return;
+    }
+    const STATUS_LABEL = { pending:"Хүлээгдэж байна", processing:"Боловсруулж байна", out_for_delivery:"Хүргэлтэнд", delivered:"Хүргэгдсэн", cancelled:"Цуцлагдсан" };
+    tbody.innerHTML = orders.map(o => {
+      const myItems = (o.items || []).filter(i => i.sellerId === _currentUid);
+      const itemNames = myItems.map(i => `${i.name} ×${i.qty}`).join(", ") || "—";
+      const myTotal = myItems.reduce((s, i) => s + i.price * i.qty, 0);
+      const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString("mn-MN") : "—";
+      const statusLabel = STATUS_LABEL[o.status] || o.status || "—";
+      return `<tr>
+        <td><code style="font-size:.78rem">${o.orderNumber||"—"}</code></td>
+        <td><div style="font-weight:700">${o.customerName||"—"}</div><div style="font-size:.74rem;color:#64748b">${o.phone||""}</div></td>
+        <td style="font-size:.8rem;max-width:180px;white-space:normal">${itemNames}</td>
+        <td><strong>${fmt(myTotal)}</strong></td>
+        <td><span class="sellerStatus sellerStatus--${o.status==="delivered"?"approved":o.status==="cancelled"?"rejected":"pending"}">${statusLabel}</span></td>
+        <td style="font-size:.78rem;color:#64748b">${date}</td>
+      </tr>`;
+    }).join("");
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="sellerTable__empty sellerTable__empty--error">Алдаа: ${e.message}</td></tr>`;
+  }
 }
 
 async function loadOverview() {

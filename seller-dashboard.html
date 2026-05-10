@@ -27,6 +27,11 @@
         Бараанууд
         <span class="sellerNav__badge" data-products-count>—</span>
       </a>
+      <a class="sellerNav__item" href="#" data-nav="orders">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        Захиалгууд
+        <span class="sellerNav__badge" data-orders-count>—</span>
+      </a>
       <a class="sellerNav__item" href="#" data-nav="add">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Бараа нэмэх
@@ -135,6 +140,23 @@
             </thead>
             <tbody data-products-tbody>
               <tr><td colspan="7" class="sellerTable__empty">Уншиж байна…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Orders page -->
+    <section class="sellerPage" data-seller-page="orders" hidden>
+      <div class="sellerCard">
+        <div class="sellerCard__head">
+          <h2 class="sellerCard__title">Захиалгууд</h2>
+        </div>
+        <div class="sellerTableWrap">
+          <table class="sellerTable">
+            <thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Бараа</th><th>Нийт</th><th>Байдал</th><th>Огноо</th></tr></thead>
+            <tbody data-orders-tbody>
+              <tr><td colspan="6" class="sellerTable__empty">Уншиж байна…</td></tr>
             </tbody>
           </table>
         </div>

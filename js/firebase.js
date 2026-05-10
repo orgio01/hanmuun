@@ -335,3 +335,54 @@ export async function setBanUser(uid, banned) {
     updatedAt: new Date().toISOString(),
   });
 }
+
+// ─── Orders (Firebase) ────────────────────────────────────────────────────
+function makeOrderNum() {
+  const t = Date.now().toString(36).toUpperCase();
+  const r = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `UB-${t}-${r}`;
+}
+
+export async function createFirebaseOrder(data) {
+  if (!FIREBASE_READY) throw new Error("not-configured");
+  const orderNumber = makeOrderNum();
+  const ref = await addDoc(collection(getDb(), "orders"), {
+    ...data,
+    orderNumber,
+    status: "pending",
+    paymentStatus: "unpaid",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  return { id: ref.id, orderNumber };
+}
+
+export async function fetchAllOrdersFirebase() {
+  if (!FIREBASE_READY) return [];
+  const snap = await getDocs(query(collection(getDb(), "orders"), orderBy("createdAt", "desc")));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function fetchSellerOrdersFirebase(sellerId) {
+  if (!FIREBASE_READY) return [];
+  // array-contains + orderBy requires composite index — filter client-side instead
+  const snap = await getDocs(
+    query(collection(getDb(), "orders"), where("sellerIds", "array-contains", sellerId))
+  );
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+}
+
+export async function fetchOrderFirebase(orderNumber) {
+  if (!FIREBASE_READY) return null;
+  const snap = await getDocs(query(collection(getDb(), "orders"), where("orderNumber", "==", orderNumber)));
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() };
+}
+
+export async function updateFirebaseOrderStatus(orderId, status) {
+  if (!FIREBASE_READY) return;
+  await updateDoc(doc(getDb(), "orders", orderId), { status, updatedAt: new Date().toISOString() });
+}

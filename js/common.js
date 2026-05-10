@@ -1,20 +1,11 @@
-import { apiJson } from "./api.js";
-import { getCartId } from "./storage.js";
+import { localCartCount } from "./storage.js";
 
-// ── Cart badge ──────────────────────────────────────────────────────────────
-export async function updateCartBadge() {
-  const badges = document.querySelectorAll("[data-cart-badge]");
-  if (!badges.length) return;
-  try {
-    const cartId = getCartId();
-    const data = await apiJson(`/api/cart?cartId=${encodeURIComponent(cartId)}`);
-    const count = (data.items || []).reduce((s, i) => s + i.qty, 0);
-    for (const b of badges) {
-      b.textContent = String(count);
-      b.hidden = count === 0;
-    }
-  } catch {
-    // ignore — badge stays hidden
+// ── Cart badge (localStorage-с шууд) ───────────────────────────────────────
+export function updateCartBadge() {
+  const count = localCartCount();
+  for (const b of document.querySelectorAll("[data-cart-badge]")) {
+    b.textContent = String(count);
+    b.hidden = count === 0;
   }
 }
 

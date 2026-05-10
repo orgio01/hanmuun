@@ -1,7 +1,6 @@
-import { apiJson }                           from "./api.js";
-import { getCartId, getProfile, setLastOrderNumber } from "./storage.js";
+import { getLocalCart, clearLocalCart, getProfile, setLastOrderNumber } from "./storage.js";
 import { initSearchNav, updateCartBadge, showToast }  from "./common.js";
-import { FIREBASE_READY, validateCoupon, incrementCouponUsage } from "./firebase.js";
+import { FIREBASE_READY, validateCoupon, incrementCouponUsage, createFirebaseOrder } from "./firebase.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const fmt    = (v) => `$${Number(v).toFixed(2)}`;
@@ -397,13 +396,11 @@ async function main() {
     return; // зогсоох
   }
 
-  // Load cart items
-  try {
-    const data = await apiJson(`/api/cart?cartId=${encodeURIComponent(getCartId())}`);
-    _items    = data.items || [];
-    _subtotal = _items.reduce((s, i) => s + i.product.price * i.qty, 0);
-    renderItems(_items);
-  } catch { setCoError("Сагсны мэдээлэл ачаалж чадсангүй."); }
+  // Load cart items from localStorage
+  const rawCart = getLocalCart();
+  _items    = rawCart.map(i => ({ product: { id: i.productId, name: i.name, price: i.price, imageUrl: i.imageUrl, sellerId: i.sellerId, sellerName: i.sellerName }, qty: i.qty }));
+  _subtotal = _items.reduce((s, i) => s + i.product.price * i.qty, 0);
+  renderItems(_items);
 
   // Profile auto-fill
   const profile  = getProfile();
@@ -484,20 +481,33 @@ async function main() {
     setSubmitLoading(true);
 
     try {
-      // 1. Create order
-      const out = await apiJson("/api/checkout", {
-        method: "POST",
-        body: JSON.stringify({
-          cartId: getCartId(),
-          customerName:  addr.name,
-          phone:         addr.phone,
-          addressLine:   addr.address,
-          district:      addr.district,
-          deliverySpeed: speed,
-          paymentMethod: payment,
-        }),
+      // 1. Create order in Firebase
+      const orderItems = _items.map(i => ({
+        productId:  i.product.id,
+        name:       i.product.name,
+        price:      i.product.price,
+        imageUrl:   i.product.imageUrl || "",
+        sellerId:   i.product.sellerId  || "",
+        sellerName: i.product.sellerName || "",
+        qty:        i.qty,
+      }));
+      const sellerIds = [...new Set(orderItems.map(i => i.sellerId).filter(Boolean))];
+      const out = await createFirebaseOrder({
+        customerName:  addr.name,
+        phone:         addr.phone,
+        addressLine:   addr.address,
+        district:      addr.district,
+        deliverySpeed: speed,
+        paymentMethod: payment,
+        items:         orderItems,
+        sellerIds,
+        subtotal:      _subtotal,
+        deliveryFee:   fee,
+        total,
       });
 
+      clearLocalCart();
+      updateCartBadge();
       setSubmitLoading(false);
       if (_coupon) incrementCouponUsage(_coupon.code).catch(() => {});
 

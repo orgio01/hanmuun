@@ -77,6 +77,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Orders ───────────────────────────────────────────────────────────
+    match /orders/{orderId} {
+      // Anyone can create (guest checkout)
+      allow create: if true;
+      // Seller өөрийн захиалга харах (sellerIds array-д uid байвал)
+      allow read: if isAuth() && request.auth.uid in resource.data.sellerIds;
+      // Admin бүгдийг унших, засах
+      allow read, write: if isAdmin();
+    }
+
     // ── Default: block all ───────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

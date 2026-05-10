@@ -1,5 +1,5 @@
 import { apiJson }                                          from "./api.js";
-import { getCartId, toggleWishlist, isInWishlist, addRecentlyViewed } from "./storage.js";
+import { addToLocalCart, toggleWishlist, isInWishlist, addRecentlyViewed } from "./storage.js";
 import { updateCartBadge, showToast, initSearchNav, initVoiceSearch } from "./common.js";
 import { initReviews } from "./reviews.js";
 import { FIREBASE_READY, getAuth_ } from "./firebase.js";
@@ -131,44 +131,19 @@ function render(p) {
     if (btnBuy)  { btnBuy.disabled  = true; }
   }
 
-  btnCart?.addEventListener("click", async () => {
-    const qty = getQty();
-    btnCart.disabled = true;
-    btnCart.textContent = "Нэмж байна…";
-    try {
-      await apiJson("/api/cart/items", {
-        method: "POST",
-        body: JSON.stringify({ cartId: getCartId(), productId: p.id, qty }),
-      });
-      showToast(`"${p.name}" сагсанд нэмлээ`, "ok");
-      updateCartBadge();
-      btnCart.textContent = "Нэмлээ ✓";
-    } catch (err) {
-      showToast(err?.message || "Алдаа гарлаа", "warn");
-      btnCart.textContent = "Дахин оролдох";
-    } finally {
-      setTimeout(() => {
-        btnCart.textContent = "Сагсанд нэмэх";
-        btnCart.disabled = p.stockQty <= 0;
-      }, 1000);
-    }
+  btnCart?.addEventListener("click", () => {
+    addToLocalCart(p, getQty());
+    showToast(`"${p.name}" сагсанд нэмлээ`, "ok");
+    updateCartBadge();
+    btnCart.textContent = "Нэмлээ ✓";
+    setTimeout(() => {
+      btnCart.textContent = "Сагсанд нэмэх";
+    }, 1000);
   });
 
-  btnBuy?.addEventListener("click", async () => {
-    const qty = getQty();
-    btnBuy.disabled = true;
-    btnBuy.textContent = "Нэмж байна…";
-    try {
-      await apiJson("/api/cart/items", {
-        method: "POST",
-        body: JSON.stringify({ cartId: getCartId(), productId: p.id, qty }),
-      });
-      window.location.href = "/checkout.html";
-    } catch (err) {
-      showToast(err?.message || "Алдаа гарлаа", "warn");
-      btnBuy.disabled = false;
-      btnBuy.textContent = "Шууд авах";
-    }
+  btnBuy?.addEventListener("click", () => {
+    addToLocalCart(p, getQty());
+    window.location.href = "/checkout.html";
   });
 }
 
