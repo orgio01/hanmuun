@@ -82,6 +82,7 @@
     .sc-pane[hidden] { display: none; }
 
     .sc-error {
+      display: none;
       padding: 9px 12px;
       margin-bottom: 14px;
       background: #fef2f2;
@@ -189,7 +190,7 @@
       </div>
 
       <!-- Бүртгүүлэх -->
-      <div class="sc-pane" data-pane="register" hidden>
+      <div class="sc-pane" data-pane="register" style="display:none">
         <div class="sc-error" data-reg-error hidden></div>
         <div class="sc-field">
           <label>Дэлгүүрийн нэр</label>
@@ -217,19 +218,6 @@
     </div>
   </div>
 
-  <script>
-    const tabs  = document.querySelectorAll("[data-tab]");
-    const panes = document.querySelectorAll("[data-pane]");
-    const switchBtns = document.querySelectorAll("[data-switch]");
-
-    function showTab(name) {
-      tabs.forEach(t  => t.classList.toggle("is-active", t.dataset.tab === name));
-      panes.forEach(p => p.hidden = p.dataset.pane !== name);
-    }
-
-    tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
-    switchBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.switch)));
-  </script>
   <script type="module" src="/js/seller.js"></script>
 </body>
 </html>
