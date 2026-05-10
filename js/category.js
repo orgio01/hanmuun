@@ -91,7 +91,7 @@ function createCard(p) {
   el.innerHTML = `
     <a class="card__imgLink" href="/product/${encodeURIComponent(p.id)}" tabindex="-1" aria-hidden="true">
       <div class="card__imgWrap">
-        <img class="card__img" src="${p.imageUrl}" alt="${p.name}" loading="lazy" />
+        <img class="card__img" src="${p.imageUrl || ''}" alt="${p.name}" loading="eager" onerror="this.style.opacity='0'" />
         ${pct ? `<span class="pill card__imgBadge pill--accent">-${pct}%</span>` : ""}
       </div>
     </a>

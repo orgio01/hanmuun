@@ -72,18 +72,20 @@ function placeholderUrl(name) {
 function mapProduct(snap) {
   const d = snap.data();
   const name = d.name ?? "";
+  const cats = Array.isArray(d.categories) ? d.categories : (d.category ? [d.category] : []);
   return {
-    id:          snap.id,
+    id:           snap.id,
     name,
-    description: d.description ?? "",
-    price:       Number(d.price    ?? 0),
-    priceWas:    d.priceWas ? Number(d.priceWas) : null,
-    imageUrl:    d.imageUrl || placeholderUrl(name),
-    category:    d.category    ?? "",
-    stockQty:    Number(d.stockQty  ?? 0),
-    badge:        d.badge        ?? null,
-    badgeTone:    d.badgeTone    ?? null,
-    deliveryType: d.deliveryType ?? "",
+    description:  d.description  ?? "",
+    price:        Number(d.price  ?? 0),
+    priceWas:     d.priceWas ? Number(d.priceWas) : null,
+    imageUrl:     d.imageUrl || placeholderUrl(name),
+    category:     d.category     ?? "",
+    categories:   cats,
+    stockQty:     Number(d.stockQty ?? 0),
+    badge:        d.badge         ?? null,
+    badgeTone:    d.badgeTone     ?? null,
+    deliveryType: d.deliveryType  ?? "",
     tags:         Array.isArray(d.tags) ? d.tags : [],
   };
 }
@@ -98,32 +100,32 @@ export async function fetchProductFirebase(id) {
   return p;
 }
 
-/** Ангиллаар шүүж авах */
+/** Ангиллаар шүүж авах — category эсвэл categories array-г шалгана */
 export async function fetchProductsByCategory(category) {
   if (!FIREBASE_READY) throw new Error("not-configured");
-  // Composite index шаардахгүйн тулд approved бараа авч category-аар шүүнэ
-  const snap = await getDocs(
-    query(collection(getDb(), "products"), where("status", "==", "approved"))
-  );
+  const snap = await getDocs(collection(getDb(), "products"));
   return snap.docs.map(mapProduct)
-    .filter(p => p.category === category)
+    .filter(p => {
+      const ok = p.status === "approved" || !p.status;
+      const inCat = p.category === category || (Array.isArray(p.categories) && p.categories.includes(category));
+      return ok && inCat;
+    })
     .sort((a, b) => a.name.localeCompare(b.name, "mn"));
 }
 
-/** Зөвхөн approved бараа авах (нүүр хуудас, хайлт) */
+/** Approved бараа авах (нүүр хуудас, section, хайлт) */
 export async function fetchAllProducts() {
   if (!FIREBASE_READY) throw new Error("not-configured");
-  const snap = await getDocs(
-    query(collection(getDb(), "products"), where("status", "==", "approved"))
-  );
-  return snap.docs.map(mapProduct);
+  const snap = await getDocs(collection(getDb(), "products"));
+  return snap.docs.map(mapProduct)
+    .filter(p => p.status === "approved" || !p.status);
 }
 
 // ─── Product CRUD (admin) ────────────────────────────────────────────────
 export async function addProduct(data) {
   if (!FIREBASE_READY) throw new Error("not-configured");
   const ref = await addDoc(collection(getDb(), "products"), {
-    ...data, updatedAt: new Date().toISOString(), createdAt: new Date().toISOString(),
+    ...data, status: "approved", updatedAt: new Date().toISOString(), createdAt: new Date().toISOString(),
   });
   return ref.id;
 }
