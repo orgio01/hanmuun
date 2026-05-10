@@ -196,7 +196,7 @@ function initRegisterForm(regForm) {
     try {
       if (FIREBASE_READY) {
         const { signUp } = await import("./auth.js");
-        await signUp({ email, password: pw, name, phone, district, addressLine: address });
+        await signUp({ email, password: pw, name, phone, district: "", addressLine: "" });
       }
       setProfile(profileData); // localStorage cache for checkout
       showToast("Бүртгэл амжилттай", "ok");
