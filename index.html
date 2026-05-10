@@ -35,14 +35,6 @@
               <a href="./profile.html?mode=signup" data-i18n="signup">Бүртгүүлэх</a>
               <span aria-hidden="true">|</span>
             </span>
-            <!-- Нэвтэрсэн үед (JS харуулна) — logout ЗӨВХӨН Profile хэсэгт -->
-            <span data-auth-user hidden>
-              <a class="topbar__welcomeChip" href="/profile.html">
-                <span class="topbar__welcomeAvatar" data-auth-initial>A</span>
-                <b data-auth-name></b>
-              </a>
-              <span aria-hidden="true">|</span>
-            </span>
             <a href="/my-orders">Захиалга</a>
             <span aria-hidden="true">|</span>
             <a href="/seller">Seller</a>
@@ -281,21 +273,13 @@
       // Auth state — show/hide login links vs user name
       if (FIREBASE_READY) {
         const { onAuth } = await import("./js/auth.js");
-        const loginLinks  = document.querySelector("[data-auth-login-links]");
-        const userDisplay = document.querySelector("[data-auth-user]");
-        const nameEl      = document.querySelector("[data-auth-name]");
+        const loginLinks = document.querySelector("[data-auth-login-links]");
 
-        onAuth((user, profile) => {
+        onAuth((user) => {
           if (user) {
-            if (loginLinks)  loginLinks.hidden  = true;
-            if (userDisplay) userDisplay.hidden  = false;
-            const initialEl = userDisplay?.querySelector("[data-auth-initial]");
-            const name = profile?.name || user.displayName || user.email || "A";
-            if (nameEl) nameEl.textContent = name;
-            if (initialEl) initialEl.textContent = name[0].toUpperCase();
+            if (loginLinks) loginLinks.hidden = true;
           } else {
-            if (loginLinks)  loginLinks.hidden  = false;
-            if (userDisplay) userDisplay.hidden  = true;
+            if (loginLinks) loginLinks.hidden = false;
           }
         });
       }
