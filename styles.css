@@ -6821,3 +6821,131 @@ body { overflow-x: hidden; }
   border-right: 1px solid rgba(232,35,42,.12) !important;
 }
 
+
+/* ══════════════════════════════════════════════════
+   MOBILE FINAL — энэ нь бүх дээрхийг дарна
+   ══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* 1. Util bar нуух */
+  .topbar__util,
+  .promoStrip { display: none !important; }
+
+  /* 2. Header: мөр 1 → [≡] [HANMUN] [👤🛒]
+              мөр 2 → [search бүтэн] */
+  .topbar__inner {
+    display: grid !important;
+    grid-template-areas: "cat brand icons" "srch srch srch" !important;
+    grid-template-columns: 52px 1fr auto !important;
+    grid-template-rows: 52px auto !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    align-items: stretch !important;
+  }
+  .topbar__catCol {
+    grid-area: cat !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    background: #1a56db !important;
+  }
+  .cCat__btn {
+    width: 52px !important; height: 52px !important; min-height: 52px !important;
+    background: transparent !important; padding: 14px !important;
+    flex-direction: column !important; align-items: center !important; justify-content: center !important;
+  }
+  .cCat__label { display: none !important; }
+  .cCat__icon  { width: 20px !important; height: 14px !important; }
+  .cCat__icon span { background: #fff !important; }
+
+  .topbar__center { display: contents !important; }
+  .topbar__center .brand {
+    grid-area: brand !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+  }
+  .topbar__center .brand__logo { font-size: 1.2rem !important; font-weight: 950 !important; }
+  .topbar__center .brand__logo::after { display: none !important; }
+
+  .topbar__center .search {
+    grid-area: srch !important;
+    width: 100% !important; padding: 8px 10px !important; display: block !important;
+  }
+  .search__field {
+    height: 44px !important; border: 1.5px solid #d1d5db !important;
+    padding-left: 14px !important; border-radius: 4px !important; gap: 6px !important;
+  }
+  .search__btn { width: 44px !important; height: 44px !important; background: #1a56db !important; border-radius: 0 4px 4px 0 !important; }
+  .search__voiceBtn { width: 32px !important; }
+
+  .topbar__right {
+    grid-area: icons !important;
+    display: flex !important; align-items: center !important;
+    gap: 2px !important; padding: 0 10px 0 4px !important;
+  }
+  .topbar__action { padding: 4px 6px !important; min-width: auto !important; gap: 2px !important; }
+  .topbar__action svg { width: 22px !important; height: 22px !important; }
+  .topbar__actionLabel { font-size: .62rem !important; }
+
+  /* 3. Banner — дэлгэцийн өндрийн ~40% */
+  .bannerFull { height: auto !important; }
+  .bannerFull .banner__slide {
+    min-height: 48vw !important;
+    height: auto !important;
+    display: flex !important; flex-direction: column !important; justify-content: center !important;
+    padding: 22px 18px !important;
+  }
+  .bannerFull .banner__title { font-size: 1.4rem !important; margin-top: 8px !important; }
+  .bannerFull .banner__hint  { font-size: .84rem !important; margin-top: 6px !important; }
+  .bannerFull .banner__dots  { height: auto !important; padding: 10px 14px !important; }
+
+  /* 4. QuickNav — 2×5 grid (Coupang шиг) */
+  .quickNav {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    overflow: visible !important;
+    padding: 8px 4px !important;
+    gap: 4px 0 !important;
+    background: #fff !important;
+    border-bottom: 1px solid rgba(16,16,16,.08) !important;
+  }
+  .quickNav__item {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 8px 2px !important;
+    min-width: unset !important;
+    width: 100% !important;
+    white-space: normal !important;
+    text-align: center !important;
+    border-right: 0 !important;
+    font-size: .64rem !important;
+    font-weight: 700 !important;
+    color: rgba(16,16,16,.7) !important;
+  }
+  .quickNav__icon  { font-size: 1.6rem !important; line-height: 1 !important; }
+  .quickNav__label { font-size: .62rem !important; line-height: 1.2 !important; }
+
+  /* 5. Page padding */
+  .page { padding: 10px 10px 80px !important; }
+  .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+
+  /* 6. Bottom nav */
+  .bottomNav {
+    display: flex !important;
+    height: 56px !important;
+    background: #fff !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 -1px 6px rgba(0,0,0,.06) !important;
+  }
+  .bottomNav__item {
+    flex: 1 !important;
+    font-size: .66rem !important;
+    font-weight: 700 !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+  }
+
+  /* bannerNavWrap: mobile → banner дээр, quicknav доор */
+  .bannerNavWrap { flex-direction: column !important; }
+  .bannerNavWrap .bannerFull { order: -1 !important; }
+  .bannerNavWrap .quickNav   { order:  0 !important; }
+}
