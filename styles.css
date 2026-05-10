@@ -5097,27 +5097,27 @@ body { overflow-x: hidden; }
 .topbar__welcomeChip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 3px;
-  background: linear-gradient(135deg, rgba(232,35,42,.08), rgba(0,116,233,.06));
-  border: 1px solid rgba(232, 35, 42, 0.20);
+  gap: 5px;
+  padding: 2px 8px 2px 2px;
+  background: transparent;
+  border: 0;
   border-radius: 99px;
-  font-size: .76rem;
-  font-weight: 650;
-  color: rgba(16, 16, 16, 0.72);
+  font-size: .78rem;
+  font-weight: 700;
+  color: #0f172a;
   text-decoration: none;
-  transition: background 130ms ease;
+  transition: opacity .13s;
   white-space: nowrap;
 }
-.topbar__welcomeChip:hover { background: linear-gradient(135deg, rgba(232,35,42,.12), rgba(0,116,233,.08)); }
+.topbar__welcomeChip:hover { opacity: .7; }
 .topbar__welcomeAvatar {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--primary);
+  background: #0f172a;
   color: #ffffff;
   font-weight: 900;
-  font-size: .7rem;
+  font-size: .66rem;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -5682,10 +5682,6 @@ body { overflow-x: hidden; }
   font-weight: 700 !important;
 }
 
-/* ── Auth welcome chip (util bar) ── */
-.topbar__welcomeChip {
-  font-size: .76rem !important;
-}
 
 /* quickNav — merge into base rule above */
 .quickNav__item {

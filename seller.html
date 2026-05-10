@@ -5,92 +5,231 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Seller Center — HANMUN</title>
   <link rel="stylesheet" href="/styles.css"/>
-  <link rel="stylesheet" href="/seller.css"/>
-</head>
-<body class="sellerAuthBody">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #f4f6f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      padding: 24px 16px;
+    }
 
-  <div class="sellerAuth">
-    <div class="sellerAuth__left">
-      <div class="sellerAuth__brand">
-        <span class="sellerAuth__logo">HANMUN</span>
-        <span class="sellerAuth__tag">Seller Center</span>
-      </div>
-      <h1 class="sellerAuth__headline">Таны дэлгүүрийг<br>онлайнд гарга</h1>
-      <p class="sellerAuth__sub">Хэдэн минутын дотор бүртгүүлж, дэлхийн өнцөг булан бүрт бараагаа борлуул.</p>
-      <ul class="sellerAuth__perks">
-        <li>✓ Үнэгүй бүртгэл — шимтгэлгүй эхэлнэ</li>
-        <li>✓ Хялбар барааны удирдлага</li>
-        <li>✓ Admin баталгаажуулалт — найдвартай</li>
-        <li>✓ Хурдан хүргэлтийн сүлжээтэй</li>
-      </ul>
+    .sc-wrap {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .sc-brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .sc-brand__logo {
+      font-size: 1.4rem;
+      font-weight: 950;
+      letter-spacing: -.03em;
+      color: #0f172a;
+    }
+    .sc-brand__tag {
+      display: block;
+      font-size: .72rem;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .sc-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .sc-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .sc-tab {
+      padding: 13px;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-size: .84rem;
+      font-weight: 700;
+      color: #94a3b8;
+      cursor: pointer;
+      position: relative;
+      transition: color .15s;
+    }
+    .sc-tab.is-active {
+      color: #0f172a;
+    }
+    .sc-tab.is-active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 2px;
+      background: #0f172a;
+    }
+
+    .sc-pane { padding: 24px; }
+    .sc-pane[hidden] { display: none; }
+
+    .sc-error {
+      padding: 9px 12px;
+      margin-bottom: 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      font-size: .82rem;
+      font-weight: 650;
+      border-radius: 4px;
+    }
+
+    .sc-field {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+    .sc-field label {
+      font-size: .76rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .sc-field input {
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .sc-field input:focus {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 3px rgba(15,23,42,.07);
+    }
+
+    .sc-btn {
+      width: 100%;
+      padding: 11px;
+      margin-top: 4px;
+      background: #0f172a;
+      color: #fff;
+      border: 0;
+      border-radius: 5px;
+      font: inherit;
+      font-size: .9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .sc-btn:hover { opacity: .88; }
+    .sc-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .sc-switch {
+      margin-top: 14px;
+      font-size: .78rem;
+      color: #94a3b8;
+      text-align: center;
+    }
+    .sc-switch button {
+      border: 0; background: transparent;
+      color: #0f172a; font-weight: 800;
+      cursor: pointer; font: inherit;
+      font-size: .78rem; padding: 0;
+    }
+    .sc-switch button:hover { text-decoration: underline; }
+
+    .sc-note {
+      font-size: .76rem;
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sc-wrap">
+    <div class="sc-brand">
+      <span class="sc-brand__logo">HANMUN</span>
+      <span class="sc-brand__tag">Seller Center</span>
     </div>
 
-    <div class="sellerAuth__right">
+    <div class="sc-card">
 
-      <!-- Tab -->
-      <div class="sellerAuth__tabs">
-        <button class="sellerAuth__tab is-active" type="button" data-tab="login">Нэвтрэх</button>
-        <button class="sellerAuth__tab" type="button" data-tab="register">Хүсэлт гаргах</button>
+      <div class="sc-tabs">
+        <button class="sc-tab is-active" type="button" data-tab="login">Нэвтрэх</button>
+        <button class="sc-tab" type="button" data-tab="register">Бүртгүүлэх</button>
       </div>
 
       <!-- Нэвтрэх -->
-      <div class="sellerAuth__pane" data-pane="login">
-        <h2 class="sellerAuth__formTitle">Seller нэвтрэх</h2>
-        <div class="sellerAuth__error" data-login-error hidden></div>
-        <div class="sellerAuth__field">
-          <label>И-мэйл хаяг</label>
+      <div class="sc-pane" data-pane="login">
+        <div class="sc-error" data-login-error hidden></div>
+        <div class="sc-field">
+          <label>И-мэйл</label>
           <input id="slEmail" type="email" autocomplete="email" placeholder="seller@gmail.com"/>
         </div>
-        <div class="sellerAuth__field">
+        <div class="sc-field">
           <label>Нууц үг</label>
           <input id="slPass" type="password" autocomplete="current-password" placeholder="Нууц үг"/>
         </div>
-        <button class="sellerAuth__btn" type="button" data-login-btn>
-          <span>Нэвтрэх</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-        <p class="sellerAuth__switch">
-          Дэлгүүр нээх үү?
-          <button type="button" data-switch="register">Хүсэлт гаргах →</button>
+        <button class="sc-btn" type="button" data-login-btn>Нэвтрэх</button>
+        <p class="sc-switch">
+          Бүртгэлгүй юу? <button type="button" data-switch="register">Бүртгүүлэх →</button>
         </p>
       </div>
 
-      <!-- Хүсэлт гаргах (Admin зөвшөөрнө) -->
-      <div class="sellerAuth__pane" data-pane="register" hidden>
-        <h2 class="sellerAuth__formTitle">Seller болох хүсэлт</h2>
-        <p style="font-size:.82rem;color:#64748b;margin:0 0 14px">
-          Хүсэлт илгээсний дараа admin зөвшөөрсөн үед нэвтрэх боломжтой болно.
-        </p>
-        <div class="sellerAuth__error" data-reg-error hidden></div>
-        <div class="sellerAuth__field">
-          <label>Дэлгүүрийн нэр *</label>
+      <!-- Бүртгүүлэх -->
+      <div class="sc-pane" data-pane="register" hidden>
+        <div class="sc-error" data-reg-error hidden></div>
+        <div class="sc-field">
+          <label>Дэлгүүрийн нэр</label>
           <input id="slShop" type="text" placeholder="Дэлгүүрийн нэр"/>
         </div>
-        <div class="sellerAuth__field">
-          <label>И-мэйл хаяг *</label>
+        <div class="sc-field">
+          <label>И-мэйл</label>
           <input id="slRegEmail" type="email" autocomplete="email" placeholder="seller@gmail.com"/>
         </div>
-        <div class="sellerAuth__field">
-          <label>Нууц үг *</label>
+        <div class="sc-field">
+          <label>Нууц үг</label>
           <input id="slRegPass" type="password" autocomplete="new-password" placeholder="8+ тэмдэгт"/>
         </div>
-        <div class="sellerAuth__field">
-          <label>Утасны дугаар *</label>
-          <input id="slPhone" type="tel" inputmode="numeric" placeholder="8 оронтой"/>
+        <div class="sc-field">
+          <label>Утас</label>
+          <input id="slPhone" type="tel" inputmode="numeric" placeholder="8 оронтой дугаар"/>
         </div>
-        <button class="sellerAuth__btn" type="button" data-reg-btn>
-          <span>Хүсэлт илгээх</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-        <p class="sellerAuth__switch">
-          Бүртгэлтэй юу?
-          <button type="button" data-switch="login">Нэвтрэх →</button>
+        <button class="sc-btn" type="button" data-reg-btn>Хүсэлт илгээх</button>
+        <p class="sc-note">Admin зөвшөөрсний дараа нэвтрэх боломжтой болно</p>
+        <p class="sc-switch">
+          Бүртгэлтэй юу? <button type="button" data-switch="login">Нэвтрэх →</button>
         </p>
       </div>
 
     </div>
   </div>
 
+  <script>
+    const tabs  = document.querySelectorAll("[data-tab]");
+    const panes = document.querySelectorAll("[data-pane]");
+    const switchBtns = document.querySelectorAll("[data-switch]");
+
+    function showTab(name) {
+      tabs.forEach(t  => t.classList.toggle("is-active", t.dataset.tab === name));
+      panes.forEach(p => p.hidden = p.dataset.pane !== name);
+    }
+
+    tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+    switchBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.switch)));
+  </script>
   <script type="module" src="/js/seller.js"></script>
 </body>
 </html>
