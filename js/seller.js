@@ -33,25 +33,22 @@ qs("[data-login-btn]")?.addEventListener("click", async () => {
   if (!email || !pass) return err("[data-login-error]", "И-мэйл болон нууц үгийг оруулна уу.");
 
   const btn = qs("[data-login-btn]");
-  btn.disabled = true; btn.querySelector("span").textContent = "Нэвтэрж байна…";
+  btn.disabled = true; btn.textContent = "Нэвтэрж байна…";
 
   try {
     if (!FIREBASE_READY) throw new Error("Firebase тохируулагдаагүй байна.");
 
     const cred = await signInWithEmailAndPassword(getAuth_(), email, pass);
 
-    // Seller profile шалгах — approved байх ёстой
     const seller = await getSellerProfile(cred.user.uid).catch(() => null);
 
     if (!seller) {
-      // Sellers collection-д байхгүй → энгийн хэрэглэгч
       await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js")
         .then(m => m.signOut(getAuth_()));
       throw new Error("Seller эрх байхгүй байна. Эхлээд хүсэлт гаргана уу.");
     }
 
     if (!seller.approved) {
-      // Хүсэлт гаргасан боловч admin зөвшөөрөөгүй
       await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js")
         .then(m => m.signOut(getAuth_()));
       throw new Error("Таны хүсэлт admin-ийн хүлээлтэд байна. Зөвшөөрсний дараа нэвтрэх боломжтой болно.");
@@ -66,7 +63,7 @@ qs("[data-login-btn]")?.addEventListener("click", async () => {
       "auth/too-many-requests":  "Хэт олон оролдлого. Хэсэг хүлээнэ үү.",
     };
     err("[data-login-error]", map[e.code] || e.message);
-    btn.disabled = false; btn.querySelector("span").textContent = "Нэвтрэх";
+    btn.disabled = false; btn.textContent = "Нэвтрэх";
   }
 });
 
@@ -84,7 +81,7 @@ qs("[data-reg-btn]")?.addEventListener("click", async () => {
   if (!phone)          return err("[data-reg-error]", "Утасны дугаарыг оруулна уу.");
 
   const btn = qs("[data-reg-btn]");
-  btn.disabled = true; btn.querySelector("span").textContent = "Илгээж байна…";
+  btn.disabled = true; btn.textContent = "Илгээж байна…";
 
   try {
     if (!FIREBASE_READY) throw new Error("Firebase тохируулагдаагүй байна.");
@@ -92,18 +89,16 @@ qs("[data-reg-btn]")?.addEventListener("click", async () => {
     const cred = await createUserWithEmailAndPassword(getAuth_(), email, pass);
     await updateProfile(cred.user, { displayName: shop });
 
-    // approved: false — admin зөвшөөрөхийг хүлээнэ
     await registerSeller(cred.user.uid, {
       shopName: shop, email, phone, description: "",
       approved: false,
     });
 
-    // Автоматаар sign out — admin зөвшөөрсний дараа л нэвтэрнэ
     await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js")
       .then(m => m.signOut(getAuth_()));
 
     err("[data-reg-error]", "");
-    btn.querySelector("span").textContent = "Илгээгдлээ";
+    btn.textContent = "Илгээгдлээ ✓";
     btn.style.background = "#16a34a";
 
     // Success message
@@ -118,6 +113,6 @@ qs("[data-reg-btn]")?.addEventListener("click", async () => {
   } catch (e) {
     const map = { "auth/email-already-in-use": "Энэ и-мэйл аль хэдийн бүртгэлтэй." };
     err("[data-reg-error]", map[e.code] || e.message);
-    btn.disabled = false; btn.querySelector("span").textContent = "Хүсэлт илгээх";
+    btn.disabled = false; btn.textContent = "Хүсэлт илгээх";
   }
 });
