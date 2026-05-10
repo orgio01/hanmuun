@@ -36,20 +36,23 @@ function fmtDate(iso) {
 
 // ── Order status config ───────────────────────────────────────────────────
 const ORDER_STATUSES = {
-  awaiting_payment: { label: "Төлбөр хүлээж байна", color: "gray"   },
-  processing:       { label: "Боловсруулж байна",    color: "blue"   },
-  out_for_delivery: { label: "Хүргэлтэнд гарсан",   color: "orange" },
-  delivered:        { label: "Хүргэгдсэн",           color: "green"  },
-  cancelled:        { label: "Цуцлагдсан",           color: "red"    },
+  pending:          { label: "Шинэ захиалга",        color: "blue"   },
+  awaiting_payment: { label: "Төлбөр хүлээж байна",  color: "gray"   },
+  processing:       { label: "Боловсруулж байна",     color: "blue"   },
+  out_for_delivery: { label: "Хүргэлтэнд гарсан",    color: "orange" },
+  delivered:        { label: "Хүргэгдсэн",            color: "green"  },
+  cancelled:        { label: "Цуцлагдсан",            color: "red"    },
 };
 
 const NEXT_STATUS = {
+  pending:          "processing",
   awaiting_payment: "processing",
   processing:       "out_for_delivery",
   out_for_delivery: "delivered",
 };
 
 const NEXT_LABEL = {
+  pending:          "✓ Хүлээн авах",
   awaiting_payment: "✓ Хүлээн авах",
   processing:       "🚚 Хүргэлтэнд гаргах",
   out_for_delivery: "🏠 Хүргэгдсэн",
@@ -115,7 +118,7 @@ function startOrderWatcher() {
     });
 
     // Захиалгын хуудсанд байвал шинэчлэх
-    if (!qs("[data-section='orders']")?.hidden) loadOrders();
+    if (!qs("[data-admin-page='orders']")?.hidden) loadOrders();
   });
 }
 
@@ -360,35 +363,43 @@ async function loadOrders() {
 
 function renderOrdersTable(orders) {
   const tbody = qs("[data-orders-tbody]");
-  if (!orders.length) { tbody.innerHTML = `<tr><td colspan="7" class="adminTable__empty">Захиалга байхгүй</td></tr>`; return; }
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="adminTable__empty">Захиалга байхгүй байна</td></tr>`;
+    return;
+  }
   tbody.innerHTML = orders.map(o => {
     const nextStatus = NEXT_STATUS[o.status];
     const nextLabel  = NEXT_LABEL[o.status];
-    return `<tr data-order-row="${o.orderNumber}">
-      <td><code style="font-size:.8rem">${o.orderNumber}</code></td>
+    const items      = o.items || [];
+    const itemSummary = items.map(i => `${i.name} ×${i.qty}`).join(", ") || "—";
+    const sellers    = [...new Set(items.map(i => i.sellerName).filter(Boolean))].join(", ") || "—";
+    const date       = o.createdAt ? new Date(o.createdAt).toLocaleDateString("mn-MN") : "—";
+    return `<tr data-order-row="${o.orderNumber||o.id}">
       <td>
-        <div style="font-weight:800;font-size:.88rem">${o.customer?.name||"—"}</div>
-        <div style="font-size:.76rem;color:rgba(16,16,16,.48)">${o.customer?.phone||""}</div>
+        <div style="font-weight:800;font-size:.82rem">${o.orderNumber||"—"}</div>
+        <div style="font-size:.72rem;color:#64748b">${date}</div>
       </td>
-      <td><strong>${fmt(o.totals?.total||0)}</strong></td>
-      <td>${statusBadge(o.status)}</td>
       <td>
-        <div class="adminOrderTrack">
-          ${["awaiting_payment","processing","out_for_delivery","delivered"].map(s=>`
-            <div class="adminOrderTrack__step ${o.status===s?'is-current':''} ${isStepDone(o.status,s)?'is-done':''}">
-              <div class="adminOrderTrack__dot"></div>
-              <div class="adminOrderTrack__label">${ORDER_STATUSES[s]?.label?.split(" ")[0]||s}</div>
-            </div>
-          `).join('<div class="adminOrderTrack__line"></div>')}
-        </div>
-        ${nextStatus && o.paymentStatus!=="cancelled" ? `
-          <button class="adminStatusBtn" data-next-status="${nextStatus}" data-order-num="${o.orderNumber}">
-            ${nextLabel}
-          </button>` : ""}
+        <div style="font-weight:700;font-size:.86rem">${o.customer?.name||o.customerName||"—"}</div>
+        <div style="font-size:.74rem;color:#64748b">${o.customer?.phone||o.phone||""}</div>
+        <div style="font-size:.72rem;color:#94a3b8">${o.customer?.district||o.district||""}</div>
       </td>
-      <td style="font-size:.8rem;color:rgba(16,16,16,.5)">${fmtDate(o.createdAt).slice(0,10)}</td>
+      <td style="font-size:.78rem;max-width:200px;white-space:normal;line-height:1.4">
+        ${itemSummary}
+        <div style="font-size:.72rem;color:#64748b;margin-top:3px">🏪 ${sellers}</div>
+      </td>
       <td>
-        <button class="adminTable__editBtn" onclick="openOrderDetail('${o.orderNumber}')" title="Харах">👁</button>
+        <strong style="font-size:.92rem">$${(o.totals?.total||o.total||0).toFixed(2)}</strong>
+        <div style="font-size:.72rem;color:#64748b">${o.paymentMethod||"—"}</div>
+      </td>
+      <td>
+        ${statusBadge(o.status)}
+        ${nextStatus ? `<br><button class="adminStatusBtn" style="margin-top:6px" data-next-status="${nextStatus}" data-order-num="${o.orderNumber||o.id}">
+          ${nextLabel}
+        </button>` : ""}
+      </td>
+      <td>
+        <button class="adminTable__editBtn" onclick="expandOrderDetail(this)" data-items='${JSON.stringify(items).replace(/'/g,"&#39;")}' title="Дэлгэрэнгүй">👁</button>
       </td>
     </tr>`;
   }).join("");
@@ -441,6 +452,36 @@ document.addEventListener("click", async (e) => {
 });
 
 // Order detail modal
+window.expandOrderDetail = function(btn) {
+  const items = JSON.parse(btn.dataset.items || "[]");
+  const row = btn.closest("tr");
+  const existing = row.nextElementSibling;
+  if (existing?.dataset.detailRow) { existing.remove(); btn.textContent = "👁"; return; }
+  btn.textContent = "✕";
+  const detail = document.createElement("tr");
+  detail.dataset.detailRow = "1";
+  detail.innerHTML = `<td colspan="6" style="background:#f8fafc;padding:12px 16px">
+    <div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:#475569">Захиалгын дэлгэрэнгүй бараанууд:</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead><tr style="color:#94a3b8;font-size:.72rem">
+        <th style="text-align:left;padding:4px 8px">Бараа</th>
+        <th style="text-align:left;padding:4px 8px">Seller</th>
+        <th style="text-align:right;padding:4px 8px">Үнэ</th>
+        <th style="text-align:right;padding:4px 8px">Тоо</th>
+        <th style="text-align:right;padding:4px 8px">Нийт</th>
+      </tr></thead>
+      <tbody>${items.map(i => `<tr style="border-top:1px solid #e2e8f0">
+        <td style="padding:6px 8px;font-weight:600">${i.name||"—"}</td>
+        <td style="padding:6px 8px;color:#64748b">${i.sellerName||"—"}</td>
+        <td style="padding:6px 8px;text-align:right">$${(i.price||0).toFixed(2)}</td>
+        <td style="padding:6px 8px;text-align:right">${i.qty}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:700">$${((i.price||0)*i.qty).toFixed(2)}</td>
+      </tr>`).join("")}</tbody>
+    </table>
+  </td>`;
+  row.insertAdjacentElement("afterend", detail);
+};
+
 window.openOrderDetail = async function(orderNumber) {
   const modal = qs("[data-order-modal]");
   const body  = qs("[data-order-modal-body]");

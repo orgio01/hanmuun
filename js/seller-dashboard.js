@@ -131,20 +131,30 @@ async function loadSellerOrders() {
       tbody.innerHTML = `<tr><td colspan="6" class="sellerTable__empty">Захиалга байхгүй байна</td></tr>`;
       return;
     }
-    const STATUS_LABEL = { pending:"Хүлээгдэж байна", processing:"Боловсруулж байна", out_for_delivery:"Хүргэлтэнд", delivered:"Хүргэгдсэн", cancelled:"Цуцлагдсан" };
+    const STATUS_CLS   = { pending:"pending", processing:"pending", out_for_delivery:"pending", delivered:"approved", cancelled:"rejected" };
+    const STATUS_LABEL = { pending:"🆕 Шинэ", processing:"⚙️ Боловсруулж байна", out_for_delivery:"🚚 Хүргэлтэнд", delivered:"✅ Хүргэгдсэн", cancelled:"❌ Цуцлагдсан" };
     tbody.innerHTML = orders.map(o => {
-      const myItems = (o.items || []).filter(i => i.sellerId === _currentUid);
-      const itemNames = myItems.map(i => `${i.name} ×${i.qty}`).join(", ") || "—";
-      const myTotal = myItems.reduce((s, i) => s + i.price * i.qty, 0);
-      const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString("mn-MN") : "—";
-      const statusLabel = STATUS_LABEL[o.status] || o.status || "—";
+      const myItems  = (o.items || []).filter(i => i.sellerId === _currentUid);
+      const myTotal  = myItems.reduce((s, i) => s + (i.price||0) * i.qty, 0);
+      const date     = o.createdAt ? new Date(o.createdAt).toLocaleString("mn-MN") : "—";
+      const cls      = STATUS_CLS[o.status]   || "pending";
+      const label    = STATUS_LABEL[o.status] || o.status || "—";
       return `<tr>
-        <td><code style="font-size:.78rem">${o.orderNumber||"—"}</code></td>
-        <td><div style="font-weight:700">${o.customerName||"—"}</div><div style="font-size:.74rem;color:#64748b">${o.phone||""}</div></td>
-        <td style="font-size:.8rem;max-width:180px;white-space:normal">${itemNames}</td>
-        <td><strong>${fmt(myTotal)}</strong></td>
-        <td><span class="sellerStatus sellerStatus--${o.status==="delivered"?"approved":o.status==="cancelled"?"rejected":"pending"}">${statusLabel}</span></td>
-        <td style="font-size:.78rem;color:#64748b">${date}</td>
+        <td>
+          <code style="font-size:.78rem;font-weight:700">${o.orderNumber||"—"}</code>
+          <div style="font-size:.7rem;color:#94a3b8;margin-top:2px">${date}</div>
+        </td>
+        <td>
+          <div style="font-weight:700">${o.customerName||"—"}</div>
+          <div style="font-size:.74rem;color:#64748b">${o.phone||""}</div>
+          <div style="font-size:.72rem;color:#94a3b8">${o.district||""}</div>
+        </td>
+        <td style="font-size:.8rem;max-width:200px;white-space:normal;line-height:1.5">
+          ${myItems.map(i=>`<div>• <b>${i.name}</b> ×${i.qty} — <span style="color:#16a34a">$${((i.price||0)*i.qty).toFixed(2)}</span></div>`).join("")||"—"}
+        </td>
+        <td><strong style="font-size:.92rem;color:#16a34a">${fmt(myTotal)}</strong></td>
+        <td><span class="sellerStatus sellerStatus--${cls}">${label}</span></td>
+        <td style="font-size:.72rem;color:#64748b">${date.split(",")[0]||""}</td>
       </tr>`;
     }).join("");
   } catch(e) {
